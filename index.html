@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guruji — Daily Life Manager</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+:root{--bg:#0f172a;--bg2:#1e293b;--bg3:#2d3f55;--text:#f1f5f9;--text2:#94a3b8;--p:#8b5cf6;--b:#3b82f6;--g:#10b981;--y:#f59e0b;--r:#ef4444;--border:#334155;--rad:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+
+/* ── SETUP OVERLAY ── */
+#setup-overlay{position:fixed;inset:0;background:#0f172a;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+#setup-overlay.hidden{display:none}
+.setup-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;max-width:680px;width:100%;padding:32px;max-height:90vh;overflow-y:auto}
+.setup-step{background:var(--bg3);border-radius:10px;padding:14px 16px;margin-bottom:12px;border-left:3px solid var(--p)}
+.setup-step h3{font-size:.9rem;font-weight:700;margin-bottom:6px;color:var(--p)}
+.setup-step p{font-size:.82rem;color:var(--text2);line-height:1.6}
+.setup-step code{background:#0f172a;padding:2px 7px;border-radius:4px;font-size:.8rem;color:var(--y);font-family:monospace}
+.setup-step a{color:var(--b);text-decoration:none}
+.setup-step a:hover{text-decoration:underline}
+.config-input{background:#0f172a;border:1px solid var(--p);border-radius:8px;color:var(--text);padding:12px;font-size:.8rem;width:100%;font-family:monospace;margin-top:8px;resize:vertical;min-height:200px}
+.config-input:focus{outline:none;border-color:var(--b)}
+
+/* ── SIGN-IN SCREEN ── */
+#signin-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px}
+#signin-screen.hidden{display:none}
+.signin-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:36px;text-align:center;max-width:400px;width:100%}
+
+/* ── HEADER ── */
+#hdr{background:linear-gradient(135deg,#1e293b,#1a1035);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:8px}
+.logo{font-size:1.2rem;font-weight:800;background:linear-gradient(90deg,var(--p),var(--b));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hdr-stat{text-align:center;background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.25);border-radius:8px;padding:4px 10px}
+.hdr-stat .v{font-size:.9rem;font-weight:700;color:var(--p)}
+.hdr-stat .l{font-size:.62rem;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+#live-time{font-size:.95rem;font-weight:600;color:var(--text)}
+#live-date{font-size:.7rem;color:var(--text2)}
+
+/* Sync badge */
+.sync-badge{font-size:.72rem;padding:3px 10px;border-radius:100px;font-weight:600;display:flex;align-items:center;gap:4px}
+.sync-ok{background:rgba(16,185,129,.15);color:var(--g);border:1px solid rgba(16,185,129,.3)}
+.sync-ing{background:rgba(245,158,11,.15);color:var(--y);border:1px solid rgba(245,158,11,.3)}
+.sync-off{background:rgba(239,68,68,.15);color:var(--r);border:1px solid rgba(239,68,68,.3)}
+
+/* User avatar */
+.user-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid var(--p);cursor:pointer}
+.user-initials{width:30px;height:30px;border-radius:50%;background:var(--p);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;cursor:pointer;flex-shrink:0}
+
+/* ── NAV ── */
+#nav{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;padding:0 10px;gap:2px;scrollbar-width:none}
+#nav::-webkit-scrollbar{display:none}
+.nb{background:none;border:none;color:var(--text2);padding:11px 14px;cursor:pointer;font-size:.8rem;font-weight:500;white-space:nowrap;border-bottom:2px solid transparent;transition:all .2s;display:flex;align-items:center;gap:5px}
+.nb:hover{color:var(--text)}
+.nb.active{color:var(--p);border-bottom-color:var(--p)}
+
+/* ── MAIN ── */
+#main{max-width:1200px;margin:0 auto;padding:18px 14px}
+.tab{display:none}.tab.active{display:block}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:16px;margin-bottom:12px}
+.ct{font-size:.92rem;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.g4{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.sc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:14px;text-align:center}
+.sc .sv{font-size:1.7rem;font-weight:700;margin-bottom:2px}
+.sc .sl{color:var(--text2);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px}
+.pb{background:var(--bg3);border-radius:100px;height:6px;overflow:hidden;margin:5px 0}
+.pbi{height:100%;border-radius:100px;transition:width .5s ease}
+.btn{padding:8px 15px;border-radius:8px;border:none;cursor:pointer;font-size:.8rem;font-weight:600;transition:all .2s}
+.bp{background:var(--p);color:#fff}.bp:hover{background:#7c3aed}
+.bg2btn{background:var(--g);color:#fff}
+.br{background:var(--r);color:#fff}
+.bo{background:transparent;border:1px solid var(--border);color:var(--text)}.bo:hover{background:var(--bg3)}
+.bs{padding:5px 11px;font-size:.77rem}
+input,textarea,select{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 11px;font-size:.86rem;width:100%;outline:none;transition:border-color .2s}
+input:focus,textarea:focus,select:focus{border-color:var(--p)}
+label{display:block;font-size:.76rem;color:var(--text2);margin-bottom:4px;font-weight:500}
+.fg{margin-bottom:10px}
+/* Schedule */
+.si{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:8px;margin-bottom:5px;background:var(--bg3);cursor:pointer;transition:all .2s}
+.si:hover{background:#3d4f6b}
+.si.done{opacity:.55}
+.si.done .sn{text-decoration:line-through}
+.sbox{width:19px;height:19px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;font-size:.6rem}
+.si.done .sbox{background:var(--g);border-color:var(--g);color:#fff}
+.stb{background:var(--bg2);color:var(--text2);font-size:.7rem;padding:2px 7px;border-radius:100px;flex-shrink:0}
+.sn{font-size:.86rem;font-weight:500;flex:1}
+.scat{font-size:.7rem;padding:2px 9px;border-radius:100px}
+.c-health{background:rgba(16,185,129,.15);color:#10b981}
+.c-study{background:rgba(59,130,246,.15);color:#3b82f6}
+.c-work{background:rgba(245,158,11,.15);color:#f59e0b}
+.c-business{background:rgba(139,92,246,.15);color:#8b5cf6}
+.c-personal{background:rgba(236,72,153,.15);color:#ec4899}
+/* Fasting */
+.ft{font-size:2.6rem;font-weight:800;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:2px}
+.fl{color:var(--text2);font-size:.83rem;text-align:center;margin-top:4px}
+/* Nutrition */
+.fi{display:flex;align-items:center;justify-content:space-between;padding:8px 11px;background:var(--bg3);border-radius:8px;margin-bottom:5px}
+.fi .fn{font-size:.84rem;font-weight:500}
+.fi .fc{font-size:.8rem;color:var(--y);font-weight:700}
+.mi{display:flex;align-items:center;margin-bottom:6px;gap:7px}
+.ml{font-size:.78rem;color:var(--text2);width:65px;flex-shrink:0}
+.mv{font-size:.78rem;font-weight:700;width:55px;text-align:right;flex-shrink:0}
+.mp{display:flex;align-items:flex-start;gap:9px;padding:9px 11px;background:var(--bg3);border-radius:8px;margin-bottom:7px}
+.mtb{background:var(--p);color:#fff;font-size:.68rem;font-weight:700;padding:3px 8px;border-radius:100px;white-space:nowrap;flex-shrink:0;margin-top:2px}
+.mdt h4{font-size:.84rem;font-weight:600;margin-bottom:2px}
+.mdt p{font-size:.76rem;color:var(--text2);line-height:1.5}
+/* Notes */
+.ni{background:var(--bg3);border-radius:8px;padding:11px 13px;margin-bottom:7px;border-left:3px solid var(--p)}
+.nd{font-size:.7rem;color:var(--text2);margin-bottom:4px}
+.nt{font-size:.84rem;line-height:1.6}
+/* Weight */
+.we{display:flex;justify-content:space-between;align-items:center;padding:7px 11px;background:var(--bg3);border-radius:8px;margin-bottom:4px}
+/* Business */
+.bt{display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--bg3);border-radius:8px;margin-bottom:5px}
+.pd{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ph{background:var(--r)}.pm{background:var(--y)}.pl{background:var(--g)}
+.st-display{font-size:2rem;font-weight:700;text-align:center;color:var(--b);font-variant-numeric:tabular-nums}
+.ib{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:9px 13px;font-size:.8rem;color:var(--text2);margin-bottom:10px;line-height:1.5}
+.ib.success{background:rgba(16,185,129,.1);border-color:rgba(16,185,129,.3)}
+.ib.warning{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3)}
+.ch{position:relative;height:210px}
+.divider{height:1px;background:var(--border);margin:12px 0}
+.del-btn{background:none;border:none;color:var(--text2);cursor:pointer;font-size:.78rem;padding:2px 6px;border-radius:4px}
+.del-btn:hover{color:var(--r);background:rgba(239,68,68,.1)}
+/* User menu */
+.user-menu{position:absolute;top:56px;right:16px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px;min-width:180px;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.user-menu.hidden{display:none}
+.user-menu-item{padding:8px 12px;border-radius:6px;cursor:pointer;font-size:.83rem;display:flex;align-items:center;gap:8px}
+.user-menu-item:hover{background:var(--bg3)}
+@media(max-width:600px){#main{padding:12px 8px}.ft{font-size:1.8rem}.hdr-stat{display:none}}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     SETUP OVERLAY (shown until configured)
+══════════════════════════════════════ -->
+<div id="setup-overlay">
+  <div class="setup-box">
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:2.5rem;margin-bottom:8px">⚡</div>
+      <h1 style="font-size:1.4rem;font-weight:800;background:linear-gradient(90deg,#8b5cf6,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Firebase Setup Required</h1>
+      <p style="color:var(--text2);font-size:.85rem;margin-top:6px">Follow these steps once to enable sync across all your devices.</p>
+    </div>
+
+    <div class="setup-step">
+      <h3>Step 1 — Create a Firebase Project</h3>
+      <p>Go to <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> → Click <strong>Add project</strong> → Name it <code>daily-manager</code> → Disable Google Analytics (not needed) → Click <strong>Create project</strong>.</p>
+    </div>
+    <div class="setup-step">
+      <h3>Step 2 — Register a Web App</h3>
+      <p>In your project, click the <strong>&lt;/&gt; Web</strong> icon → Name it <code>daily-manager-app</code> → Click <strong>Register app</strong>. You'll see a <code>firebaseConfig</code> object — copy it.</p>
+    </div>
+    <div class="setup-step">
+      <h3>Step 3 — Enable Firestore Database</h3>
+      <p>In the left menu → <strong>Firestore Database</strong> → <strong>Create database</strong> → Choose <strong>Start in test mode</strong> → Pick any region → Click <strong>Enable</strong>.</p>
+    </div>
+    <div class="setup-step">
+      <h3>Step 4 — Enable Google Sign-In</h3>
+      <p>Left menu → <strong>Authentication</strong> → <strong>Get started</strong> → Click <strong>Google</strong> → Toggle <strong>Enable</strong> → Add your email as support email → Save.</p>
+    </div>
+    <div class="setup-step">
+      <h3>Step 5 — Add Authorised Domain (for GitHub Pages)</h3>
+      <p>In Authentication → <strong>Settings</strong> → <strong>Authorised domains</strong> → Click <strong>Add domain</strong> → Enter <code>yourusername.github.io</code> (replace with your actual GitHub username).</p>
+    </div>
+    <div class="setup-step" style="border-color:var(--g)">
+      <h3 style="color:var(--g)">Step 6 — Paste Your Firebase Config Below</h3>
+      <p>Paste the <code>firebaseConfig</code> object you copied from Step 2. It looks like the example below.</p>
+      <textarea class="config-input" id="config-input" placeholder='{
+  apiKey: "AIzaSy...",
+  authDomain: "your-project.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abc123"
+}'></textarea>
+      <button class="btn bp" style="margin-top:10px;width:100%" onclick="applyFirebaseConfig()">✅ Save Config & Launch App</button>
+    </div>
+    <p style="color:var(--text2);font-size:.75rem;text-align:center;margin-top:12px">Your config is saved in this browser. You only need to do this once per device.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SIGN-IN SCREEN
+══════════════════════════════════════ -->
+<div id="signin-screen" class="hidden">
+  <div class="signin-box">
+    <div style="font-size:3rem;margin-bottom:10px">⚡</div>
+    <h2 style="font-size:1.3rem;font-weight:800;background:linear-gradient(90deg,#8b5cf6,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px">Guruji Dashboard</h2>
+    <p style="color:var(--text2);font-size:.85rem;margin-bottom:24px">Sign in to sync your data across all devices.</p>
+    <button onclick="signInWithGoogle()" style="background:#fff;color:#1f2937;border:none;border-radius:10px;padding:12px 20px;font-size:.9rem;font-weight:700;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:10px">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
+      Continue with Google
+    </button>
+    <p style="color:var(--text2);font-size:.72rem;margin-top:14px">Your data is private and only accessible with your Google account.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MAIN APP
+══════════════════════════════════════ -->
+<div id="app" style="display:none">
+
+<div id="hdr">
+  <div class="logo">⚡ Guruji Dashboard</div>
+  <div class="hdr-right">
+    <div class="hdr-stat"><div class="v" id="hdr-tasks">0/0</div><div class="l">Tasks</div></div>
+    <div class="hdr-stat"><div class="v" id="hdr-cals">0</div><div class="l">kcal</div></div>
+    <div class="hdr-stat"><div class="v" id="hdr-fast">--:--</div><div class="l">Fast</div></div>
+    <div id="sync-badge" class="sync-badge sync-ing">⏳ Syncing</div>
+    <div><div id="live-time">--:--:--</div><div id="live-date"></div></div>
+    <div id="user-btn" onclick="toggleUserMenu()" style="cursor:pointer"></div>
+  </div>
+</div>
+
+<div id="user-menu" class="user-menu hidden">
+  <div id="user-menu-name" style="padding:8px 12px;font-size:.8rem;color:var(--text2);border-bottom:1px solid var(--border);margin-bottom:4px"></div>
+  <div class="user-menu-item" onclick="signOutUser()">🚪 Sign Out</div>
+  <div class="user-menu-item" onclick="exportData()">📥 Export Data (JSON)</div>
+</div>
+
+<div id="nav">
+  <button class="nb active" onclick="showTab('dashboard')">🏠 Dashboard</button>
+  <button class="nb" onclick="showTab('schedule')">📋 Schedule</button>
+  <button class="nb" onclick="showTab('fasting')">⏱ Fasting</button>
+  <button class="nb" onclick="showTab('nutrition')">🥗 Nutrition</button>
+  <button class="nb" onclick="showTab('study')">📚 Study</button>
+  <button class="nb" onclick="showTab('business')">🚀 Business</button>
+  <button class="nb" onclick="showTab('progress')">📈 Progress</button>
+  <button class="nb" onclick="showTab('notes')">📝 Notes</button>
+</div>
+
+<div id="main">
+
+<!-- DASHBOARD -->
+<div id="tab-dashboard" class="tab active">
+  <div style="margin-bottom:14px">
+    <h2 style="font-size:1.25rem;font-weight:800" id="greeting">Good morning, Guruji 👋</h2>
+    <p style="color:var(--text2);font-size:.82rem;margin-top:3px" id="motivational-quote"></p>
+  </div>
+  <div class="g4" style="margin-bottom:12px">
+    <div class="sc"><div class="sv" style="color:var(--g)" id="db-tasks-done">0/0</div><div class="sl">Tasks Done</div><div class="pb" style="margin-top:6px"><div class="pbi" style="background:var(--g)" id="db-tasks-bar"></div></div></div>
+    <div class="sc"><div class="sv" style="color:var(--y)" id="db-calories">0</div><div class="sl">kcal Today</div><div class="pb" style="margin-top:6px"><div class="pbi" style="background:var(--y)" id="db-cal-bar"></div></div></div>
+    <div class="sc"><div class="sv" style="color:var(--b)" id="db-fasting">--</div><div class="sl">Fasting</div></div>
+    <div class="sc"><div class="sv" style="color:var(--p)" id="db-weight">80 kg</div><div class="sl">Weight</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ct">📋 Today's Schedule</div>
+      <div id="db-schedule-list"></div>
+      <button class="btn bp bs" onclick="showTab('schedule')" style="margin-top:6px">View Full Schedule →</button>
+    </div>
+    <div class="card">
+      <div class="ct">🍽 Eating Window</div>
+      <canvas id="fasting-ring-canvas" width="170" height="170" style="display:block;margin:0 auto"></canvas>
+      <div style="text-align:center;margin-top:6px;font-size:.8rem;color:var(--text2)" id="db-fast-status"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">🎯 Today's Goals</div>
+    <div class="g3">
+      <div><div style="font-size:.78rem;color:var(--text2);margin-bottom:3px">Java Study</div><div class="pb"><div class="pbi" style="background:var(--b)" id="goal-study-bar"></div></div><div style="font-size:.72rem;color:var(--text2)" id="goal-study-text">0 / 90 min</div></div>
+      <div><div style="font-size:.78rem;color:var(--text2);margin-bottom:3px">Workout</div><div class="pb"><div class="pbi" style="background:var(--g)" id="goal-workout-bar"></div></div><div style="font-size:.72rem;color:var(--text2)" id="goal-workout-text">0 / 75 min</div></div>
+      <div><div style="font-size:.78rem;color:var(--text2);margin-bottom:3px">Business</div><div class="pb"><div class="pbi" style="background:var(--p)" id="goal-biz-bar"></div></div><div style="font-size:.72rem;color:var(--text2)" id="goal-biz-text">0 / 120 min</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SCHEDULE -->
+<div id="tab-schedule" class="tab">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+    <h2 style="font-size:1.1rem;font-weight:700">📋 Daily Schedule</h2>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:.78rem;color:var(--text2)" id="sched-progress-text"></span>
+      <button class="btn bo bs" onclick="resetSchedule()">↺ Reset</button>
+    </div>
+  </div>
+  <div class="card" style="padding:10px"><div id="schedule-list"></div></div>
+  <div class="card">
+    <div class="ct">➕ Add Custom Task</div>
+    <div class="g2">
+      <div class="fg"><label>Task Name</label><input id="custom-task-name" placeholder="e.g. Meditate 20 min"></div>
+      <div class="fg"><label>Time</label><input id="custom-task-time" type="time" value="08:00"></div>
+    </div>
+    <div class="fg"><label>Category</label>
+      <select id="custom-task-cat">
+        <option value="health">🏃 Health</option><option value="study">📚 Study</option><option value="work">💼 Work</option><option value="business">🚀 Business</option><option value="personal">✨ Personal</option>
+      </select>
+    </div>
+    <button class="btn bp" onclick="addCustomTask()">Add Task</button>
+  </div>
+</div>
+
+<!-- FASTING -->
+<div id="tab-fasting" class="tab">
+  <div class="g2">
+    <div class="card" style="text-align:center">
+      <div class="ct" style="justify-content:center">⏱ Fasting Timer</div>
+      <div style="padding:12px 0">
+        <div style="font-size:.8rem;color:var(--text2);margin-bottom:5px" id="fast-mode-label">FASTING</div>
+        <div class="ft" id="fast-countdown">00:00:00</div>
+        <div class="fl" id="fast-until-label">until eating window opens</div>
+      </div>
+      <canvas id="fast-arc" width="190" height="190" style="display:block;margin:0 auto"></canvas>
+      <div style="margin-top:10px;display:flex;justify-content:center;gap:16px">
+        <div style="text-align:center"><div style="font-size:.72rem;color:var(--text2)">Eating Starts</div><div style="font-weight:700;color:var(--g)" id="eat-start-display">07:30</div></div>
+        <div style="text-align:center"><div style="font-size:.72rem;color:var(--text2)">Window</div><div style="font-weight:700;color:var(--y)">12 hrs</div></div>
+        <div style="text-align:center"><div style="font-size:.72rem;color:var(--text2)">Eating Ends</div><div style="font-weight:700;color:var(--r)" id="eat-end-display">19:30</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ct">⚙️ Fasting Settings</div>
+        <div class="fg"><label>Eating Window Start</label><input type="time" id="fast-start" value="07:30" onchange="saveFastSettings()"></div>
+        <div class="fg"><label>Eating Window End</label><input type="time" id="fast-end" value="19:30" onchange="saveFastSettings()"></div>
+        <div class="ib success">You are on a <strong>12:12 protocol</strong>. Eating 7:30 AM – 7:30 PM. Great starting point for sustainable fat loss!</div>
+      </div>
+      <div class="card">
+        <div class="ct">📅 Today's Eating Log</div>
+        <div id="fasting-log-list"><p style="color:var(--text2);font-size:.82rem">No entries yet today.</p></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn bg2btn bs" onclick="logFastingBreak('start')">🍳 Meal Start</button>
+          <button class="btn bo bs" onclick="logFastingBreak('end')">✅ Meal End</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">📖 Your 6-Month IF Progression Plan</div>
+    <div class="ib warning">🎯 Goal: Lose 10 kg in 6 months (80 kg → 70 kg). Daily deficit of ~500 kcal with 12:12 IF + 1700 kcal target + workout = ~0.5 kg/week loss.</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">
+      <div style="background:var(--bg3);border-radius:8px;padding:11px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--g)">12:12</div><div style="font-size:.75rem;color:var(--text2);margin-top:2px">Current</div><div style="font-size:.72rem;color:var(--text2)">Month 1–2</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:11px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--y)">14:10</div><div style="font-size:.75rem;color:var(--text2);margin-top:2px">Next Step</div><div style="font-size:.72rem;color:var(--text2)">Month 3–4</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:11px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--p)">16:8</div><div style="font-size:.75rem;color:var(--text2);margin-top:2px">Advanced</div><div style="font-size:.72rem;color:var(--text2)">Month 5–6</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:11px;text-align:center"><div style="font-size:1.3rem;font-weight:800;color:var(--r)">–500</div><div style="font-size:.75rem;color:var(--text2);margin-top:2px">kcal Deficit/day</div><div style="font-size:.72rem;color:var(--text2)">~0.4 kg/week</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- NUTRITION -->
+<div id="tab-nutrition" class="tab">
+  <div class="g2">
+    <div class="card">
+      <div class="ct">🔥 Today's Calories</div>
+      <div style="text-align:center;margin-bottom:12px">
+        <div style="font-size:2rem;font-weight:800;color:var(--y)" id="nut-total-cals">0</div>
+        <div style="color:var(--text2);font-size:.8rem">of <span id="nut-goal-cals">1700</span> kcal goal</div>
+        <div class="pb" style="margin-top:8px;height:9px"><div class="pbi" style="background:linear-gradient(90deg,var(--g),var(--y))" id="nut-cal-bar"></div></div>
+        <div style="font-size:.75rem;color:var(--text2);margin-top:3px"><span id="nut-remaining">1700</span> kcal remaining</div>
+      </div>
+      <div class="divider"></div>
+      <div class="ct" style="margin-bottom:8px">💪 Macros</div>
+      <div class="mi"><div class="ml">Protein</div><div class="pb" style="flex:1"><div class="pbi" style="background:var(--b)" id="macro-p-bar"></div></div><div class="mv" style="color:var(--b)"><span id="macro-p">0</span>g / 150g</div></div>
+      <div class="mi"><div class="ml">Carbs</div><div class="pb" style="flex:1"><div class="pbi" style="background:var(--y)" id="macro-c-bar"></div></div><div class="mv" style="color:var(--y)"><span id="macro-c">0</span>g / 150g</div></div>
+      <div class="mi"><div class="ml">Fats</div><div class="pb" style="flex:1"><div class="pbi" style="background:var(--r)" id="macro-f-bar"></div></div><div class="mv" style="color:var(--r)"><span id="macro-f">0</span>g / 65g</div></div>
+    </div>
+    <div class="card">
+      <div class="ct">➕ Log Food</div>
+      <div class="fg"><label>Food Name</label><input id="food-name" placeholder="e.g. 2 Eggs boiled"></div>
+      <div class="g2">
+        <div class="fg"><label>Calories (kcal)</label><input id="food-cals" type="number" placeholder="150"></div>
+        <div class="fg"><label>Meal</label><select id="food-meal"><option>Breakfast</option><option>Lunch</option><option>Snack</option><option>Dinner</option></select></div>
+      </div>
+      <div class="g3">
+        <div class="fg"><label>Protein (g)</label><input id="food-p" type="number" placeholder="0"></div>
+        <div class="fg"><label>Carbs (g)</label><input id="food-c" type="number" placeholder="0"></div>
+        <div class="fg"><label>Fat (g)</label><input id="food-f" type="number" placeholder="0"></div>
+      </div>
+      <button class="btn bp" onclick="addFood()">Log Food</button>
+      <div class="divider"></div>
+      <div class="ct" style="margin-bottom:6px">⚡ Quick Add</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px" id="quick-foods"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">🗒 Today's Food Log</div>
+    <div id="food-log-list"><p style="color:var(--text2);font-size:.82rem">No food logged yet today.</p></div>
+  </div>
+  <div class="card">
+    <div class="ct">🍽 Meal Plan (1700 kcal / day)</div>
+    <div class="ib">Eating window: <strong>7:30 AM – 7:30 PM</strong> · Target: 150g protein · 150g carbs · 65g fats</div>
+    <div class="mp"><div class="mtb">7:30 AM</div><div class="mdt"><h4>🍳 Breakfast (~440 kcal)</h4><p>2 boiled eggs (140 kcal, 12g P) · Greek yogurt 150g (90 kcal) · Mixed nuts 20g (120 kcal) · 1 banana or apple (90 kcal)</p></div></div>
+    <div class="mp"><div class="mtb">12:30 PM</div><div class="mdt"><h4>🥗 Lunch (~520 kcal)</h4><p>Grilled chicken/dal 120g (200 kcal, 35g P) · Brown rice 80g (130 kcal) · Salad with olive oil (120 kcal) · 1 fruit (70 kcal)</p></div></div>
+    <div class="mp"><div class="mtb">4:00 PM</div><div class="mdt"><h4>🥜 Snack (~220 kcal)</h4><p>Mixed nuts 25g (150 kcal) · Fresh fruit or juice no added sugar (70 kcal)</p></div></div>
+    <div class="mp"><div class="mtb">7:00 PM</div><div class="mdt"><h4>🍽 Dinner (~520 kcal) — Before 7:30 PM!</h4><p>Fish/eggs/paneer 150g (200 kcal, 30g P) · Stir-fried vegetables (120 kcal) · Greek yogurt 100g (60 kcal) · Small whole grain portion (140 kcal)</p></div></div>
+  </div>
+</div>
+
+<!-- STUDY -->
+<div id="tab-study" class="tab">
+  <div class="g2">
+    <div class="card">
+      <div class="ct">⏱ Study Session Timer</div>
+      <div class="st-display" id="study-timer-display">00:00:00</div>
+      <div style="text-align:center;margin-top:6px;color:var(--text2);font-size:.8rem" id="study-timer-label">Session not started</div>
+      <div style="display:flex;justify-content:center;gap:8px;margin-top:12px">
+        <button class="btn bp" id="study-start-btn" onclick="startStudyTimer()">▶ Start</button>
+        <button class="btn bo" id="study-pause-btn" onclick="pauseStudyTimer()" disabled>⏸ Pause</button>
+        <button class="btn br bs" onclick="resetStudyTimer()">■ Reset</button>
+      </div>
+      <div class="fg" style="margin-top:12px"><label>Session Type</label>
+        <select id="study-type">
+          <option>📖 Java Core Concepts</option><option>💻 Java Coding Practice</option><option>🎓 Online Course</option><option>🔁 Morning Revision</option><option>🌆 Evening Revision</option><option>📝 Problem Solving</option>
+        </select>
+      </div>
+      <div class="fg"><label>Notes (optional)</label><textarea id="study-notes-input" rows="2" placeholder="What did you cover?"></textarea></div>
+      <button class="btn bg2btn" onclick="logStudySession()">💾 Log Session</button>
+    </div>
+    <div class="card">
+      <div class="ct">📊 Study Stats</div>
+      <div class="g2" style="margin-bottom:12px">
+        <div class="sc"><div class="sv" style="color:var(--b)" id="study-today">0 min</div><div class="sl">Today</div></div>
+        <div class="sc"><div class="sv" style="color:var(--g)" id="study-week">0 min</div><div class="sl">This Week</div></div>
+      </div>
+      <div class="ch"><canvas id="study-chart"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">📚 Java Learning Roadmap</div>
+    <div id="java-topics-list"></div>
+    <div style="margin-top:8px;display:flex;gap:8px"><input id="new-topic" placeholder="Add topic (e.g. Java Streams)"><button class="btn bp bs" onclick="addTopic()">Add</button></div>
+  </div>
+  <div class="card"><div class="ct">📝 Study Log</div><div id="study-log-list"><p style="color:var(--text2);font-size:.82rem">No sessions logged yet.</p></div></div>
+</div>
+
+<!-- BUSINESS -->
+<div id="tab-business" class="tab">
+  <div class="ib">🚀 <strong>Online Business Focus:</strong> Leverage AI to build apps, provide services, gain clients. Daily time slot: 6:00–8:00 PM.</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ct">🎯 Projects</div>
+      <div id="biz-projects-list"></div>
+      <div class="divider"></div>
+      <div class="fg"><label>Project Name</label><input id="biz-proj-name" placeholder="e.g. AI Automation Tool"></div>
+      <div class="fg"><label>Status</label><select id="biz-proj-status"><option>🔴 Idea</option><option>🟡 In Progress</option><option>🟢 Live</option><option>⭐ Revenue Generating</option></select></div>
+      <div class="fg"><label>Notes</label><input id="biz-proj-notes" placeholder="Key idea or next step"></div>
+      <button class="btn bp" onclick="addBizProject()">Add Project</button>
+    </div>
+    <div class="card">
+      <div class="ct">✅ Today's Business Tasks</div>
+      <div id="biz-tasks-list"></div>
+      <div class="divider"></div>
+      <div class="fg"><label>Task</label><input id="biz-task-name" placeholder="e.g. Build landing page"></div>
+      <div class="fg"><label>Priority</label><select id="biz-task-priority"><option value="high">🔴 High</option><option value="med">🟡 Medium</option><option value="low">🟢 Low</option></select></div>
+      <button class="btn bp" onclick="addBizTask()">Add Task</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">💡 Service & Product Ideas</div>
+    <div class="g2">
+      <div style="background:var(--bg3);border-radius:8px;padding:11px"><h4 style="font-size:.85rem;margin-bottom:5px;color:var(--p)">🤖 AI Services</h4><p style="font-size:.76rem;color:var(--text2);line-height:1.6">Chatbot development · Automation workflows · Custom GPT tools · AI content pipelines · Data dashboards</p></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:11px"><h4 style="font-size:.85rem;margin-bottom:5px;color:var(--b)">💻 App Development</h4><p style="font-size:.76rem;color:var(--text2);line-height:1.6">SaaS micro-tools · Chrome extensions · Mobile apps · API integrations · Web scrapers</p></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:11px"><h4 style="font-size:.85rem;margin-bottom:5px;color:var(--g)">🎯 Freelance</h4><p style="font-size:.76rem;color:var(--text2);line-height:1.6">Java development · Full-stack projects · Technical consulting · MVP builds for startups</p></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:11px"><h4 style="font-size:.85rem;margin-bottom:5px;color:var(--y)">📦 Digital Products</h4><p style="font-size:.76rem;color:var(--text2);line-height:1.6">Templates · Online courses · Technical e-books · Productivity tools</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div id="tab-progress" class="tab">
+  <div class="g2">
+    <div class="card">
+      <div class="ct">⚖️ Weight Tracker</div>
+      <div style="text-align:center;margin-bottom:12px">
+        <div style="font-size:1.9rem;font-weight:800;color:var(--p)" id="prog-current-weight">80 kg</div>
+        <div style="color:var(--text2);font-size:.8rem">Goal: 70 kg by Nov 2026</div>
+        <div class="pb" style="margin:8px 0;height:9px"><div class="pbi" style="background:linear-gradient(90deg,var(--p),var(--b))" id="prog-weight-bar"></div></div>
+        <div style="font-size:.75rem;color:var(--text2)"><span id="prog-lost">0</span> kg lost · <span id="prog-remaining-w">10</span> kg to go</div>
+      </div>
+      <div class="fg"><label>Log Today's Weight (kg)</label>
+        <div style="display:flex;gap:8px"><input id="weight-input" type="number" step="0.1" placeholder="80.0"><button class="btn bp bs" onclick="logWeight()">Log</button></div>
+      </div>
+      <div id="weight-log-list" style="max-height:150px;overflow-y:auto;margin-top:8px"></div>
+    </div>
+    <div class="card"><div class="ct">📊 Weight Chart</div><div class="ch"><canvas id="weight-chart"></canvas></div></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="ct">🔥 Habit Streaks</div><div id="streak-list"></div></div>
+    <div class="card"><div class="ct">📅 Weekly Summary</div><div class="ch"><canvas id="weekly-chart"></canvas></div></div>
+  </div>
+</div>
+
+<!-- NOTES -->
+<div id="tab-notes" class="tab">
+  <div class="card">
+    <div class="ct">✍️ New Note</div>
+    <div class="g2">
+      <div class="fg"><label>Title</label><input id="note-title" placeholder="e.g. Java Revision - Collections"></div>
+      <div class="fg"><label>Category</label><select id="note-cat"><option>📚 Study</option><option>💼 Work</option><option>🚀 Business</option><option>🏃 Health</option><option>💡 Ideas</option><option>📖 General</option></select></div>
+    </div>
+    <div class="fg"><label>Note</label><textarea id="note-content" rows="4" placeholder="Write your note here..."></textarea></div>
+    <button class="btn bp" onclick="addNote()">Save Note</button>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+    <h3 style="font-size:.92rem;font-weight:700">All Notes (<span id="notes-count">0</span>)</h3>
+    <input id="notes-search" placeholder="🔍 Search notes..." style="width:190px;padding:5px 10px;font-size:.78rem" oninput="renderNotes()">
+  </div>
+  <div id="notes-list"></div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ═══════════════════════════════════════════════════
+// FIREBASE CONFIGURATION
+// ═══════════════════════════════════════════════════
+const CONFIG_KEY = 'guruji_fb_config';
+let fb, auth, db, currentUser = null;
+
+function getStoredConfig(){
+  try{ return JSON.parse(localStorage.getItem(CONFIG_KEY)); }catch(e){ return null; }
+}
+
+function applyFirebaseConfig(){
+  const raw = document.getElementById('config-input').value.trim();
+  // Accept both JS object and JSON formats
+  let cfg;
+  try {
+    // Try converting JS-style object to JSON
+    const jsonStr = raw
+      .replace(/\/\/.*/g,'')           // remove // comments
+      .replace(/([{,]\s*)([a-zA-Z_]\w*)\s*:/g, '$1"$2":')  // quote keys
+      .replace(/'/g, '"');             // single to double quotes
+    cfg = JSON.parse(jsonStr);
+  } catch(e){
+    alert('Could not parse the config. Please paste the exact firebaseConfig object from Firebase console.');
+    return;
+  }
+  if(!cfg.apiKey || !cfg.projectId){
+    alert('Config is missing apiKey or projectId. Please check and try again.');
+    return;
+  }
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+  initFirebase(cfg);
+}
+
+function initFirebase(cfg){
+  try {
+    if(!firebase.apps.length) firebase.initializeApp(cfg);
+    auth = firebase.auth();
+    db   = firebase.firestore();
+    document.getElementById('setup-overlay').classList.add('hidden');
+
+    auth.onAuthStateChanged(user => {
+      if(user){
+        currentUser = user;
+        document.getElementById('signin-screen').classList.add('hidden');
+        document.getElementById('app').style.display = 'block';
+        setupUserUI(user);
+        loadAndListen();
+      } else {
+        currentUser = null;
+        document.getElementById('signin-screen').classList.remove('hidden');
+        document.getElementById('app').style.display = 'none';
+      }
+    });
+  } catch(e){
+    alert('Firebase init error: ' + e.message + '\n\nPlease check your config.');
+  }
+}
+
+function signInWithGoogle(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(e => alert('Sign-in failed: ' + e.message));
+}
+
+function signOutUser(){
+  if(confirm('Sign out?')) auth.signOut();
+  toggleUserMenu();
+}
+
+function setupUserUI(user){
+  const btn = document.getElementById('user-btn');
+  if(user.photoURL){
+    btn.innerHTML = `<img src="${user.photoURL}" class="user-avatar" alt="avatar">`;
+  } else {
+    const initials = (user.displayName||user.email||'G').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+    btn.innerHTML = `<div class="user-initials">${initials}</div>`;
+  }
+  const nm = document.getElementById('user-menu-name');
+  if(nm) nm.textContent = user.displayName || user.email;
+}
+
+function toggleUserMenu(){
+  document.getElementById('user-menu').classList.toggle('hidden');
+}
+document.addEventListener('click', e => {
+  if(!e.target.closest('#user-btn') && !e.target.closest('#user-menu'))
+    document.getElementById('user-menu').classList.add('hidden');
+});
+
+// ═══════════════════════════════════════════════════
+// DATA LAYER — Firestore sync
+// ═══════════════════════════════════════════════════
+const APP_KEY = 'guruji_v2_cache';
+let D = getDefaultData();
+let saveTimeout = null;
+let listenerUnsub = null;
+
+function getDefaultData(){
+  return {
+    schedule:{}, nutrition:{}, weight:[{date:today(), w:80}],
+    studySessions:[], studyTopics:[
+      {id:1,name:'Java Basics & OOP',done:true},
+      {id:2,name:'Collections Framework',done:false},
+      {id:3,name:'Streams & Lambda',done:false},
+      {id:4,name:'Exception Handling',done:false},
+      {id:5,name:'Multithreading',done:false},
+      {id:6,name:'Spring Boot',done:false},
+      {id:7,name:'Design Patterns',done:false},
+      {id:8,name:'REST APIs with Java',done:false},
+    ],
+    bizProjects:[], bizTasks:[],
+    notes:[], fastingLog:{},
+    fastSettings:{start:'07:30',end:'19:30'},
+    settings:{calorieGoal:1700,proteinGoal:150,carbGoal:150,fatGoal:65,targetWeight:70,targetDate:'2026-11-03'},
+    streaks:{workout:0,study:0,fasting:0,business:0}
+  };
+}
+
+function today(){ return new Date().toISOString().slice(0,10); }
+
+function ensureToday(){
+  const t=today();
+  if(!D.schedule[t]) D.schedule[t]={completed:[]};
+  if(!D.nutrition[t]) D.nutrition[t]={foods:[]};
+  if(!D.fastingLog[t]) D.fastingLog[t]=[];
+}
+
+function setSyncBadge(state){
+  const el=document.getElementById('sync-badge'); if(!el) return;
+  if(state==='ok'){el.className='sync-badge sync-ok';el.textContent='✅ Synced';}
+  else if(state==='ing'){el.className='sync-badge sync-ing';el.textContent='⏳ Syncing';}
+  else{el.className='sync-badge sync-off';el.textContent='⚠️ Offline';}
+}
+
+function save(){
+  // Immediate local cache
+  localStorage.setItem(APP_KEY, JSON.stringify(D));
+  // Debounced Firestore write
+  clearTimeout(saveTimeout);
+  setSyncBadge('ing');
+  saveTimeout = setTimeout(async ()=>{
+    if(!currentUser) return setSyncBadge('off');
+    try {
+      await db.collection('users').doc(currentUser.uid).set(D);
+      setSyncBadge('ok');
+    } catch(e){
+      console.warn('Firestore save error', e);
+      setSyncBadge('off');
+    }
+  }, 1500);
+}
+
+function loadAndListen(){
+  if(!currentUser) return;
+  setSyncBadge('ing');
+  // Unsubscribe old listener
+  if(listenerUnsub) listenerUnsub();
+  // Real-time listener — updates UI on any device
+  listenerUnsub = db.collection('users').doc(currentUser.uid)
+    .onSnapshot(doc => {
+      if(doc.exists){
+        D = doc.data();
+        // Fill in any missing keys from defaults
+        const def = getDefaultData();
+        for(const k in def){ if(D[k] === undefined) D[k] = def[k]; }
+        ensureToday();
+        renderAll();
+        setSyncBadge('ok');
+        localStorage.setItem(APP_KEY, JSON.stringify(D));
+      } else {
+        // First time — save defaults
+        D = getDefaultData();
+        ensureToday();
+        save();
+        renderAll();
+      }
+    }, err => {
+      console.warn('Firestore listen error', err);
+      setSyncBadge('off');
+      // Fall back to local cache
+      const cached = localStorage.getItem(APP_KEY);
+      if(cached) D = JSON.parse(cached);
+      ensureToday();
+      renderAll();
+    });
+}
+
+function exportData(){
+  const blob = new Blob([JSON.stringify(D, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'guruji-backup-'+today()+'.json';
+  a.click();
+  toggleUserMenu();
+}
+
+// ═══════════════════════════════════════════════════
+// STARTUP — check for saved config
+// ═══════════════════════════════════════════════════
+(function startup(){
+  const cfg = getStoredConfig();
+  if(cfg && cfg.apiKey){
+    initFirebase(cfg);
+  } else {
+    document.getElementById('setup-overlay').classList.remove('hidden');
+  }
+})();
+
+// ═══════════════════════════════════════════════════
+// DEFAULT SCHEDULE
+// ═══════════════════════════════════════════════════
+const DEFAULT_SCHEDULE=[
+  {id:'wake',time:'04:30',name:'Wake Up',cat:'health',icon:'🌅'},
+  {id:'java-study',time:'04:30',name:'Java Study (1.5 hrs)',cat:'study',icon:'☕',goal:'study',goalMin:90},
+  {id:'workout',time:'06:00',name:'Workout (1–1.5 hrs)',cat:'health',icon:'💪',goal:'workout',goalMin:75},
+  {id:'breakfast',time:'07:30',name:'Breakfast (Eating Window Starts)',cat:'health',icon:'🍳'},
+  {id:'work',time:'07:30',name:'Start Work — Deep Focus',cat:'work',icon:'💼'},
+  {id:'lunch',time:'12:30',name:'Lunch Break',cat:'health',icon:'🥗'},
+  {id:'work-end',time:'17:00',name:'Work Ends',cat:'work',icon:'✅'},
+  {id:'revision',time:'17:00',name:'Java Revision (1 hr)',cat:'study',icon:'📚'},
+  {id:'snack',time:'17:30',name:'Evening Snack (Nuts + Fruit)',cat:'health',icon:'🥜'},
+  {id:'business',time:'18:00',name:'Online Business Work (2 hrs)',cat:'business',icon:'🚀',goal:'biz',goalMin:120},
+  {id:'dinner',time:'19:00',name:'Dinner (Before 7:30 PM)',cat:'health',icon:'🍽'},
+  {id:'fast-start',time:'19:30',name:'Fasting Starts',cat:'health',icon:'🌙'},
+  {id:'wind-down',time:'21:30',name:'Wind Down / Reading',cat:'personal',icon:'📖'},
+  {id:'sleep',time:'22:30',name:'Sleep (6 hrs target)',cat:'health',icon:'😴'},
+];
+
+const QUICK_FOODS=[
+  {n:'2 Boiled Eggs',kcal:140,p:12,c:1,f:10},{n:'Greek Yogurt 150g',kcal:90,p:10,c:5,f:3},
+  {n:'Mixed Nuts 20g',kcal:120,p:3,c:4,f:10},{n:'Banana',kcal:90,p:1,c:23,f:0},
+  {n:'Apple',kcal:72,p:0,c:19,f:0},{n:'Chicken 100g',kcal:165,p:31,c:0,f:4},
+  {n:'Brown Rice 80g',kcal:130,p:3,c:28,f:1},{n:'Mixed Salad',kcal:50,p:2,c:8,f:1},
+  {n:'Olive Oil 1 tsp',kcal:40,p:0,c:0,f:5},{n:'Almonds 15g',kcal:87,p:3,c:3,f:8},
+];
+
+const QUOTES=[
+  'Discipline is choosing between what you want now and what you want most.',
+  'The secret of getting ahead is getting started.',
+  'Success is the sum of small efforts, repeated day in and day out.',
+  'Your future is created by what you do today, not tomorrow.',
+  'Push yourself — no one else is going to do it for you.',
+  'Great things never come from comfort zones.',
+  'Work hard in silence. Let your success be the noise.',
+];
+
+// ═══════════════════════════════════════════════════
+// LIVE CLOCK
+// ═══════════════════════════════════════════════════
+function updateClock(){
+  const now=new Date();
+  const te=document.getElementById('live-time'); if(te) te.textContent=now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const de=document.getElementById('live-date'); if(de) de.textContent=now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const h=now.getHours();
+  let gr='Good morning'; if(h>=12&&h<17) gr='Good afternoon'; else if(h>=17) gr='Good evening';
+  const gel=document.getElementById('greeting'); if(gel) gel.textContent=gr+', Guruji 👋';
+}
+setInterval(updateClock,1000); updateClock();
+
+// ═══════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════
+function showTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  const map={dashboard:'🏠',schedule:'📋',fasting:'⏱',nutrition:'🥗',study:'📚',business:'🚀',progress:'📈',notes:'📝'};
+  document.querySelectorAll('.nb').forEach(b=>{if(b.textContent.includes(map[id])) b.classList.add('active');});
+  if(id==='study') renderStudyChart();
+  if(id==='progress'){renderWeightChart();renderWeeklyChart();}
+}
+
+// ═══════════════════════════════════════════════════
+// SCHEDULE
+// ═══════════════════════════════════════════════════
+function getScheduleItems(){
+  const t=today(); const custom=D.schedule[t]?.customTasks||[];
+  return [...DEFAULT_SCHEDULE,...custom].sort((a,b)=>a.time.localeCompare(b.time));
+}
+function getCompleted(){ return D.schedule[today()]?.completed||[]; }
+function toggleTask(id){
+  ensureToday(); const t=today(); const c=D.schedule[t].completed;
+  const i=c.indexOf(id); if(i>-1) c.splice(i,1); else c.push(id);
+  save(); renderAll();
+}
+function renderScheduleList(elId, limit){
+  const el=document.getElementById(elId); if(!el) return;
+  const items=limit?getScheduleItems().slice(0,limit):getScheduleItems();
+  const comp=getCompleted();
+  el.innerHTML=items.map(item=>{
+    const done=comp.includes(item.id);
+    const catLabel=item.cat.charAt(0).toUpperCase()+item.cat.slice(1);
+    return `<div class="si ${done?'done':''}" onclick="toggleTask('${item.id}')">
+      <div class="sbox">${done?'✓':''}</div>
+      <div class="stb">${item.time}</div>
+      <div class="sn">${item.icon} ${item.name}</div>
+      <div class="scat c-${item.cat}">${catLabel}</div>
+    </div>`;
+  }).join('');
+}
+function resetSchedule(){ if(confirm('Reset today\'s schedule?')){D.schedule[today()].completed=[];save();renderAll();} }
+function addCustomTask(){
+  const name=document.getElementById('custom-task-name').value.trim();
+  const time=document.getElementById('custom-task-time').value;
+  const cat=document.getElementById('custom-task-cat').value;
+  if(!name) return alert('Enter a task name');
+  ensureToday();
+  if(!D.schedule[today()].customTasks) D.schedule[today()].customTasks=[];
+  D.schedule[today()].customTasks.push({id:'c'+Date.now(),time,name,cat,icon:'📌'});
+  document.getElementById('custom-task-name').value='';
+  save(); renderAll();
+}
+
+// ═══════════════════════════════════════════════════
+// FASTING TIMER
+// ═══════════════════════════════════════════════════
+function saveFastSettings(){
+  D.fastSettings.start=document.getElementById('fast-start').value;
+  D.fastSettings.end=document.getElementById('fast-end').value;
+  save(); renderFastingArc();
+}
+function getFastStatus(){
+  const now=new Date(); const {start,end}=D.fastSettings||{start:'07:30',end:'19:30'};
+  const [sh,sm]=start.split(':').map(Number); const [eh,em]=end.split(':').map(Number);
+  const s=sh*60+sm, e=eh*60+em, cur=now.getHours()*60+now.getMinutes();
+  const eating=cur>=s&&cur<e;
+  let targetMin; if(eating) targetMin=e-cur; else { if(cur<s) targetMin=s-cur; else targetMin=1440-cur+s; }
+  return {eating,targetMin};
+}
+function updateFastingTimer(){
+  const now=new Date(); const {start,end}=D.fastSettings||{start:'07:30',end:'19:30'};
+  const [sh,sm]=start.split(':').map(Number); const [eh,em]=end.split(':').map(Number);
+  const s=sh*3600+sm*60, e=eh*3600+em*60;
+  const cur=now.getHours()*3600+now.getMinutes()*60+now.getSeconds();
+  const eating=cur>=s&&cur<e;
+  let remaining; if(eating) remaining=e-cur; else { if(cur<s) remaining=s-cur; else remaining=86400-cur+s; }
+  const hh=Math.floor(remaining/3600), mm=Math.floor((remaining%3600)/60), ss=remaining%60;
+  const timeStr=`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+  const el=document.getElementById('fast-countdown'); if(el) el.textContent=timeStr;
+  const ml=document.getElementById('fast-mode-label'); const ul=document.getElementById('fast-until-label');
+  if(eating){ if(ml){ml.textContent='🟢 EATING WINDOW';ml.style.color='var(--g)';} if(ul) ul.textContent='until fasting starts'; }
+  else { if(ml){ml.textContent='🔵 FASTING';ml.style.color='var(--b)';} if(ul) ul.textContent='until eating window opens'; }
+  const hf=document.getElementById('hdr-fast'); if(hf) hf.textContent=timeStr.slice(0,5);
+  const dbf=document.getElementById('db-fasting'); if(dbf) dbf.textContent=eating?'Eating 🟢':'Fasting 🔵';
+}
+setInterval(updateFastingTimer,1000);
+
+function renderFastingArc(){
+  [document.getElementById('fast-arc'), document.getElementById('fasting-ring-canvas')].forEach(c=>{
+    if(!c) return; const ctx=c.getContext('2d'); const w=c.width,h=c.height,r=Math.min(w,h)/2-12;
+    ctx.clearRect(0,0,w,h); const cx=w/2,cy=h/2;
+    const {start,end}=D.fastSettings||{start:'07:30',end:'19:30'};
+    const [sh,sm]=start.split(':').map(Number); const [eh,em]=end.split(':').map(Number);
+    const startAngle=(sh*60+sm)/1440*Math.PI*2-Math.PI/2;
+    const endAngle=(eh*60+em)/1440*Math.PI*2-Math.PI/2;
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='#2d3f55';ctx.lineWidth=13;ctx.stroke();
+    ctx.beginPath();ctx.arc(cx,cy,r,endAngle,startAngle);ctx.strokeStyle='#3b82f6';ctx.lineWidth=13;ctx.lineCap='round';ctx.stroke();
+    ctx.beginPath();ctx.arc(cx,cy,r,startAngle,endAngle);ctx.strokeStyle='#10b981';ctx.lineWidth=13;ctx.lineCap='round';ctx.stroke();
+    const now2=new Date(); const nowAngle=(now2.getHours()*60+now2.getMinutes())/1440*Math.PI*2-Math.PI/2;
+    const px=cx+r*Math.cos(nowAngle),py=cy+r*Math.sin(nowAngle);
+    ctx.beginPath();ctx.arc(px,py,5,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+    const eating2=getFastStatus().eating;
+    ctx.fillStyle='#94a3b8';ctx.font=`${Math.floor(r/5.5)}px Segoe UI`;ctx.textAlign='center';ctx.fillText(eating2?'Eating':'Fasting',cx,cy);
+  });
+  const sd=document.getElementById('eat-start-display'); if(sd) sd.textContent=(D.fastSettings||{}).start||'07:30';
+  const ed=document.getElementById('eat-end-display'); if(ed) ed.textContent=(D.fastSettings||{}).end||'19:30';
+  const dfs=document.getElementById('db-fast-status'); if(dfs) dfs.textContent=`🟢 Eating: ${(D.fastSettings||{}).start||'07:30'} – ${(D.fastSettings||{}).end||'19:30'}  ·  🔵 Fasting: ${(D.fastSettings||{}).end||'19:30'} – ${(D.fastSettings||{}).start||'07:30'}`;
+  // Sync settings inputs
+  const fs=document.getElementById('fast-start'); if(fs) fs.value=(D.fastSettings||{}).start||'07:30';
+  const fe=document.getElementById('fast-end'); if(fe) fe.value=(D.fastSettings||{}).end||'19:30';
+}
+setInterval(renderFastingArc, 60000);
+
+function logFastingBreak(type){
+  ensureToday();
+  const now=new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  D.fastingLog[today()].push({type,time:now});
+  save(); renderFastingLog();
+}
+function renderFastingLog(){
+  const el=document.getElementById('fasting-log-list'); if(!el) return;
+  const logs=D.fastingLog[today()]||[];
+  if(!logs.length){el.innerHTML='<p style="color:var(--text2);font-size:.82rem">No entries yet today.</p>';return;}
+  el.innerHTML=logs.map(l=>`<div class="fi"><span class="fn">${l.type==='start'?'🍳 Meal started':'✅ Meal ended'}</span><span class="fc">${l.time}</span></div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// NUTRITION
+// ═══════════════════════════════════════════════════
+function addFood(){
+  const name=document.getElementById('food-name').value.trim();
+  const cals=parseInt(document.getElementById('food-cals').value)||0;
+  const meal=document.getElementById('food-meal').value;
+  const p=parseInt(document.getElementById('food-p').value)||0;
+  const c=parseInt(document.getElementById('food-c').value)||0;
+  const f=parseInt(document.getElementById('food-f').value)||0;
+  if(!name||!cals) return alert('Enter food name and calories');
+  ensureToday();
+  D.nutrition[today()].foods.push({id:Date.now(),name,cals,meal,p,c,f});
+  save();
+  ['food-name','food-cals','food-p','food-c','food-f'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  renderNutrition();
+}
+function quickAdd(food){
+  ensureToday();
+  D.nutrition[today()].foods.push({id:Date.now(),name:food.n,cals:food.kcal,meal:'Snack',p:food.p,c:food.c,f:food.f});
+  save(); renderNutrition();
+}
+function removeFood(id){
+  ensureToday();
+  D.nutrition[today()].foods=D.nutrition[today()].foods.filter(f=>f.id!==id);
+  save(); renderNutrition();
+}
+function renderNutrition(){
+  ensureToday();
+  const foods=D.nutrition[today()].foods;
+  const total={cals:0,p:0,c:0,f:0};
+  foods.forEach(f=>{total.cals+=f.cals;total.p+=f.p;total.c+=f.c;total.f+=f.f;});
+  const goal=D.settings?.calorieGoal||1700;
+  const pct=Math.min(100,Math.round(total.cals/goal*100));
+  const se=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const sw=(id,w)=>{const e=document.getElementById(id);if(e)e.style.width=w+'%';};
+  se('nut-total-cals',total.cals);se('nut-goal-cals',goal);se('nut-remaining',Math.max(0,goal-total.cals));sw('nut-cal-bar',pct);
+  se('macro-p',total.p);se('macro-c',total.c);se('macro-f',total.f);
+  sw('macro-p-bar',Math.min(100,total.p/150*100));sw('macro-c-bar',Math.min(100,total.c/150*100));sw('macro-f-bar',Math.min(100,total.f/65*100));
+  const hc=document.getElementById('hdr-cals');if(hc) hc.textContent=total.cals;
+  const el=document.getElementById('food-log-list');
+  if(el){
+    if(!foods.length){el.innerHTML='<p style="color:var(--text2);font-size:.82rem">No food logged yet today.</p>';}
+    else {
+      const meals=['Breakfast','Lunch','Snack','Dinner'];
+      el.innerHTML=meals.map(m=>{
+        const mfoods=foods.filter(f=>f.meal===m); if(!mfoods.length) return '';
+        const mtotal=mfoods.reduce((a,f)=>a+f.cals,0);
+        return `<div style="margin-bottom:10px"><div style="font-size:.78rem;color:var(--text2);margin-bottom:5px;font-weight:600">${m} — ${mtotal} kcal</div>${mfoods.map(f=>`<div class="fi"><span class="fn">${f.name}<span style="color:var(--text2);font-size:.72rem;margin-left:5px">P:${f.p}g C:${f.c}g F:${f.f}g</span></span><span style="display:flex;align-items:center;gap:6px"><span class="fc">${f.cals}</span><button class="del-btn" onclick="removeFood(${f.id})">✕</button></span></div>`).join('')}</div>`;
+      }).join('');
+    }
+  }
+  const qf=document.getElementById('quick-foods');
+  if(qf) qf.innerHTML=QUICK_FOODS.map(f=>`<button class="btn bo bs" onclick="quickAdd({n:'${f.n}',kcal:${f.kcal},p:${f.p},c:${f.c},f:${f.f}})">+${f.n} (${f.kcal})</button>`).join('');
+  const dbc=document.getElementById('db-calories');if(dbc) dbc.textContent=total.cals;
+  const dbcb=document.getElementById('db-cal-bar');if(dbcb) dbcb.style.width=pct+'%';
+}
+
+// ═══════════════════════════════════════════════════
+// STUDY TIMER
+// ═══════════════════════════════════════════════════
+let studyTimer=null, studySeconds=0, studyRunning=false;
+function startStudyTimer(){
+  if(studyRunning) return; studyRunning=true;
+  studyTimer=setInterval(()=>{
+    studySeconds++;
+    const h=Math.floor(studySeconds/3600),m=Math.floor((studySeconds%3600)/60),s=studySeconds%60;
+    const d=document.getElementById('study-timer-display'); if(d) d.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    const l=document.getElementById('study-timer-label'); if(l) l.textContent='Session in progress ⏱';
+  },1000);
+  const sb=document.getElementById('study-start-btn'); if(sb) sb.disabled=true;
+  const pb=document.getElementById('study-pause-btn'); if(pb) pb.disabled=false;
+}
+function pauseStudyTimer(){
+  clearInterval(studyTimer); studyRunning=false;
+  const sb=document.getElementById('study-start-btn'); if(sb){sb.disabled=false;sb.textContent='▶ Resume';}
+  const l=document.getElementById('study-timer-label'); if(l) l.textContent='Paused';
+}
+function resetStudyTimer(){
+  clearInterval(studyTimer); studyRunning=false; studySeconds=0;
+  const d=document.getElementById('study-timer-display'); if(d) d.textContent='00:00:00';
+  const l=document.getElementById('study-timer-label'); if(l) l.textContent='Session not started';
+  const sb=document.getElementById('study-start-btn'); if(sb){sb.disabled=false;sb.textContent='▶ Start';}
+  const pb=document.getElementById('study-pause-btn'); if(pb) pb.disabled=true;
+}
+function logStudySession(){
+  const mins=Math.round(studySeconds/60); if(mins<1) return alert('Start a session first');
+  const type=document.getElementById('study-type').value;
+  const notes=document.getElementById('study-notes-input').value;
+  D.studySessions.push({id:Date.now(),date:today(),mins,type,notes});
+  save(); resetStudyTimer();
+  const ni=document.getElementById('study-notes-input'); if(ni) ni.value='';
+  renderStudy();
+}
+function addTopic(){
+  const name=document.getElementById('new-topic').value.trim(); if(!name) return;
+  D.studyTopics.push({id:Date.now(),name,done:false});
+  const nt=document.getElementById('new-topic'); if(nt) nt.value='';
+  save(); renderStudy();
+}
+function toggleTopic(id){
+  const t=D.studyTopics.find(t=>t.id==id); if(t) t.done=!t.done;
+  save(); renderStudy();
+}
+function renderStudy(){
+  const todayMins=D.studySessions.filter(s=>s.date===today()).reduce((a,s)=>a+s.mins,0);
+  const weekStart=new Date(); weekStart.setDate(weekStart.getDate()-6);
+  const weekMins=D.studySessions.filter(s=>new Date(s.date)>=weekStart).reduce((a,s)=>a+s.mins,0);
+  const se=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  se('study-today',todayMins+' min'); se('study-week',weekMins+' min');
+  const tl=document.getElementById('java-topics-list');
+  if(tl) tl.innerHTML=(D.studyTopics||[]).map(t=>`<div class="si ${t.done?'done':''}" onclick="toggleTopic(${t.id})"><div class="sbox">${t.done?'✓':''}</div><div class="sn">${t.name}</div><div class="scat c-study">${t.done?'Done':'Pending'}</div></div>`).join('');
+  const sl=document.getElementById('study-log-list');
+  if(sl){
+    const recent=(D.studySessions||[]).slice(-10).reverse();
+    if(!recent.length){sl.innerHTML='<p style="color:var(--text2);font-size:.82rem">No sessions logged yet.</p>';}
+    else sl.innerHTML=recent.map(s=>`<div class="fi"><span class="fn">${s.type}<br><span style="font-size:.72rem;color:var(--text2)">${s.date}${s.notes?' · '+s.notes:''}</span></span><span class="fc">${s.mins} min</span></div>`).join('');
+  }
+  const gb=document.getElementById('goal-study-bar'); if(gb) gb.style.width=Math.min(100,todayMins/90*100)+'%';
+  const gt=document.getElementById('goal-study-text'); if(gt) gt.textContent=todayMins+' / 90 min';
+}
+function renderStudyChart(){
+  const ctx=document.getElementById('study-chart'); if(!ctx) return;
+  const days=[]; for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10));}
+  const mins=days.map(d=>(D.studySessions||[]).filter(s=>s.date===d).reduce((a,s)=>a+s.mins,0));
+  const labels=days.map(d=>new Date(d).toLocaleDateString('en-US',{weekday:'short'}));
+  if(window._studyChart) window._studyChart.destroy();
+  window._studyChart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Study Minutes',data:mins,backgroundColor:'rgba(59,130,246,.6)',borderColor:'#3b82f6',borderWidth:2,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#94a3b8'},grid:{color:'#334155'}},y:{ticks:{color:'#94a3b8'},grid:{color:'#334155'},beginAtZero:true}}}});
+}
+
+// ═══════════════════════════════════════════════════
+// BUSINESS
+// ═══════════════════════════════════════════════════
+function addBizProject(){
+  const name=document.getElementById('biz-proj-name').value.trim();
+  const status=document.getElementById('biz-proj-status').value;
+  const notes=document.getElementById('biz-proj-notes').value;
+  if(!name) return alert('Enter a project name');
+  D.bizProjects.push({id:Date.now(),name,status,notes});
+  document.getElementById('biz-proj-name').value=''; document.getElementById('biz-proj-notes').value='';
+  save(); renderBusiness();
+}
+function addBizTask(){
+  const name=document.getElementById('biz-task-name').value.trim();
+  const priority=document.getElementById('biz-task-priority').value;
+  if(!name) return alert('Enter a task');
+  D.bizTasks.push({id:Date.now(),name,priority,done:false,date:today()});
+  document.getElementById('biz-task-name').value='';
+  save(); renderBusiness();
+}
+function toggleBizTask(id){ const t=D.bizTasks.find(t=>t.id==id); if(t) t.done=!t.done; save(); renderBusiness(); }
+function removeBizProject(id){ D.bizProjects=D.bizProjects.filter(p=>p.id!==id); save(); renderBusiness(); }
+function removeBizTask(id){ D.bizTasks=D.bizTasks.filter(t=>t.id!==id); save(); renderBusiness(); }
+function renderBusiness(){
+  const pl=document.getElementById('biz-projects-list');
+  if(pl){ if(!(D.bizProjects||[]).length) pl.innerHTML='<p style="color:var(--text2);font-size:.82rem">No projects yet.</p>';
+  else pl.innerHTML=D.bizProjects.map(p=>`<div class="bt"><div style="flex:1"><div style="font-size:.85rem;font-weight:600">${p.name}</div><div style="font-size:.73rem;color:var(--text2);margin-top:2px">${p.status}${p.notes?' · '+p.notes:''}</div></div><button class="del-btn" onclick="removeBizProject(${p.id})">✕</button></div>`).join(''); }
+  const tl=document.getElementById('biz-tasks-list');
+  if(tl){ const tasks=(D.bizTasks||[]).filter(t=>t.date===today()||!t.done).slice(-20).reverse();
+  if(!tasks.length) tl.innerHTML='<p style="color:var(--text2);font-size:.82rem">No tasks today.</p>';
+  else tl.innerHTML=tasks.map(t=>`<div class="bt"><div class="pd p${t.priority}"></div><div style="flex:1;font-size:.85rem;${t.done?'text-decoration:line-through;opacity:.5':''}">${t.name}</div><input type="checkbox" ${t.done?'checked':''} onchange="toggleBizTask(${t.id})" style="width:auto"><button class="del-btn" onclick="removeBizTask(${t.id})">✕</button></div>`).join(''); }
+  const biz=D.bizTasks.filter(t=>t.date===today()&&t.done).length*30;
+  const gb=document.getElementById('goal-biz-bar'); if(gb) gb.style.width=Math.min(100,biz/120*100)+'%';
+  const gt=document.getElementById('goal-biz-text'); if(gt) gt.textContent=biz+' / 120 min';
+}
+
+// ═══════════════════════════════════════════════════
+// PROGRESS
+// ═══════════════════════════════════════════════════
+function logWeight(){
+  const w=parseFloat(document.getElementById('weight-input').value);
+  if(isNaN(w)||w<30||w>300) return alert('Enter a valid weight');
+  D.weight=D.weight.filter(e=>e.date!==today());
+  D.weight.push({date:today(),w});
+  const wi=document.getElementById('weight-input'); if(wi) wi.value='';
+  save(); renderProgress();
+}
+function renderProgress(){
+  const wt=D.weight||[];
+  const latest=wt.length?wt[wt.length-1].w:80;
+  const startW=wt[0]?.w||80;
+  const target=D.settings?.targetWeight||70;
+  const lost=Math.max(0,(startW-latest)).toFixed(1);
+  const rem=Math.max(0,(latest-target)).toFixed(1);
+  const pct=Math.min(100,Math.max(0,(startW-latest)/(startW-target)*100));
+  const se=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  se('prog-current-weight',latest+' kg'); se('prog-lost',lost); se('prog-remaining-w',rem);
+  const pb=document.getElementById('prog-weight-bar'); if(pb) pb.style.width=pct+'%';
+  const dbw=document.getElementById('db-weight'); if(dbw) dbw.textContent=latest+' kg';
+  const wl=document.getElementById('weight-log-list');
+  if(wl) wl.innerHTML=wt.slice(-7).reverse().map(e=>`<div class="we"><span style="color:var(--text2);font-size:.8rem">${e.date}</span><span style="font-weight:700;color:var(--p)">${e.w} kg</span></div>`).join('');
+  renderStreaks();
+}
+function renderStreaks(){
+  const el=document.getElementById('streak-list'); if(!el) return;
+  const habits=[{name:'🏃 Workout',key:'workout',color:'var(--g)'},{name:'📚 Study',key:'study',color:'var(--b)'},{name:'⏱ Fasting',key:'fasting',color:'var(--y)'},{name:'🚀 Business',key:'business',color:'var(--p)'}];
+  el.innerHTML=habits.map(h=>{
+    const streak=(D.streaks||{})[h.key]||0;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 11px;background:var(--bg3);border-radius:8px;margin-bottom:5px">
+      <span style="font-size:.85rem;font-weight:500">${h.name}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:1.2rem;font-weight:800;color:${h.color}">${streak}</span>
+        <span style="font-size:.7rem;color:var(--text2)">days</span>
+        <button class="btn bo bs" onclick="addStreak('${h.key}')">+1</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function addStreak(key){ if(!D.streaks) D.streaks={}; D.streaks[key]=(D.streaks[key]||0)+1; save(); renderStreaks(); }
+function renderWeightChart(){
+  const ctx=document.getElementById('weight-chart'); if(!ctx) return;
+  const data=(D.weight||[]).slice(-30);
+  const labels=data.map(e=>new Date(e.date).toLocaleDateString('en-US',{month:'short',day:'numeric'}));
+  const weights=data.map(e=>e.w);
+  const projected=weights.map((_,i)=>+(( weights[weights.length-1]||(D.weight?.[0]?.w||80))-(10/180)*i).toFixed(1));
+  if(window._weightChart) window._weightChart.destroy();
+  window._weightChart=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Actual Weight',data:weights,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.15)',borderWidth:2,pointRadius:3,fill:true,tension:.3},{label:'Target Line',data:projected.slice(0,weights.length),borderColor:'#10b981',borderDash:[5,5],borderWidth:1.5,pointRadius:0,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}}},scales:{x:{ticks:{color:'#94a3b8'},grid:{color:'#334155'}},y:{ticks:{color:'#94a3b8'},grid:{color:'#334155'},min:65,max:85}}}});
+}
+function renderWeeklyChart(){
+  const ctx=document.getElementById('weekly-chart'); if(!ctx) return;
+  const days=[]; for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d.toISOString().slice(0,10));}
+  const labels=days.map(d=>new Date(d).toLocaleDateString('en-US',{weekday:'short'}));
+  const tasksData=days.map(d=>{const s=D.schedule[d];if(!s) return 0;return Math.round(((s.completed||[]).length/DEFAULT_SCHEDULE.length)*100);});
+  const studyData=days.map(d=>(D.studySessions||[]).filter(s=>s.date===d).reduce((a,s)=>a+s.mins,0));
+  if(window._weeklyChart) window._weeklyChart.destroy();
+  window._weeklyChart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Tasks %',data:tasksData,backgroundColor:'rgba(139,92,246,.6)',borderRadius:4,yAxisID:'y'},{label:'Study min',data:studyData,backgroundColor:'rgba(59,130,246,.6)',borderRadius:4,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}}},scales:{x:{ticks:{color:'#94a3b8'},grid:{color:'#334155'}},y:{position:'left',ticks:{color:'#94a3b8'},grid:{color:'#334155'},max:100},y1:{position:'right',ticks:{color:'#94a3b8'},grid:{drawOnChartArea:false},max:120}}}});
+}
+
+// ═══════════════════════════════════════════════════
+// NOTES
+// ═══════════════════════════════════════════════════
+function addNote(){
+  const title=document.getElementById('note-title').value.trim();
+  const content=document.getElementById('note-content').value.trim();
+  const cat=document.getElementById('note-cat').value;
+  if(!content) return alert('Write something first');
+  D.notes.push({id:Date.now(),date:today(),time:new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}),title,content,cat});
+  document.getElementById('note-title').value=''; document.getElementById('note-content').value='';
+  save(); renderNotes();
+}
+function removeNote(id){ D.notes=D.notes.filter(n=>n.id!==id); save(); renderNotes(); }
+function renderNotes(){
+  const search=(document.getElementById('notes-search')?.value||'').toLowerCase();
+  let notes=(D.notes||[]).filter(n=>!search||(n.title+n.content).toLowerCase().includes(search)).slice().reverse();
+  const el=document.getElementById('notes-list');
+  const cnt=document.getElementById('notes-count'); if(cnt) cnt.textContent=(D.notes||[]).length;
+  if(!el) return;
+  if(!notes.length){el.innerHTML='<p style="color:var(--text2);font-size:.82rem">No notes yet.</p>';return;}
+  el.innerHTML=notes.map(n=>`<div class="ni"><div class="nd">${n.cat} · ${n.date} ${n.time}</div>${n.title?`<div style="font-weight:600;margin-bottom:3px;font-size:.87rem">${n.title}</div>`:''}<div class="nt">${n.content}</div><button class="del-btn" style="margin-top:5px" onclick="removeNote(${n.id})">✕ Delete</button></div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════
+function renderDashboard(){
+  const comp=getCompleted(); const total=getScheduleItems().length; const done=comp.length;
+  const pct=total?Math.round(done/total*100):0;
+  const se=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const sw=(id,w)=>{const e=document.getElementById(id);if(e)e.style.width=w+'%';};
+  se('db-tasks-done',done+'/'+total); sw('db-tasks-bar',pct);
+  se('hdr-tasks',done+'/'+total); se('sched-progress-text',done+'/'+total+' done ('+pct+'%)');
+  const todayStudy=(D.studySessions||[]).filter(s=>s.date===today()).reduce((a,s)=>a+s.mins,0);
+  sw('goal-study-bar',Math.min(100,todayStudy/90*100)); se('goal-study-text',todayStudy+' / 90 min');
+  sw('goal-workout-bar',comp.includes('workout')?100:0); se('goal-workout-text',comp.includes('workout')?'75 / 75 min':'0 / 75 min');
+  renderScheduleList('db-schedule-list',8);
+  const qe=document.getElementById('motivational-quote'); if(qe) qe.textContent=QUOTES[new Date().getDay()%QUOTES.length];
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER ALL
+// ═══════════════════════════════════════════════════
+function renderAll(){
+  ensureToday();
+  renderScheduleList('schedule-list');
+  renderDashboard();
+  renderNutrition();
+  renderStudy();
+  renderBusiness();
+  renderProgress();
+  renderNotes();
+  renderFastingLog();
+  renderFastingArc();
+  updateFastingTimer();
+}
+</script>
+</body>
+</html>
