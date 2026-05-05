@@ -135,6 +135,71 @@ label{display:block;font-size:.76rem;color:var(--text2);margin-bottom:4px;font-w
 .user-menu-item{padding:8px 12px;border-radius:6px;cursor:pointer;font-size:.83rem;display:flex;align-items:center;gap:8px}
 .user-menu-item:hover{background:var(--bg3)}
 @media(max-width:600px){#main{padding:12px 8px}.ft{font-size:1.8rem}.hdr-stat{display:none}}
+
+/* ══ CALENDAR ══ */
+.cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.cal-title-text{font-size:1.15rem;font-weight:800}
+.cal-nav-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.cal-nav-btn:hover{background:var(--p);border-color:var(--p)}
+.cal-mstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:14px}
+.cal-ms{background:var(--bg3);border-radius:10px;padding:9px 12px;text-align:center}
+.cal-ms .v{font-size:1.1rem;font-weight:800}.cal-ms .l{font-size:.68rem;color:var(--text2);margin-top:2px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-dow{text-align:center;font-size:.68rem;font-weight:700;color:var(--text2);padding:5px 0;text-transform:uppercase;letter-spacing:.5px}
+.cal-day{background:var(--bg3);border-radius:10px;padding:6px;min-height:88px;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;border:1.5px solid transparent;position:relative;overflow:hidden}
+.cal-day:hover{transform:scale(1.04);z-index:2;border-color:rgba(139,92,246,.55);box-shadow:0 4px 18px rgba(0,0,0,.35)}
+.cal-day.today{border-color:var(--p)!important;box-shadow:0 0 0 2px rgba(139,92,246,.28)}
+.cal-day.other-month{opacity:.22;cursor:default;pointer-events:none}
+.cal-day.future{opacity:.38;cursor:default}
+.cal-day.future:hover{transform:none;box-shadow:none;border-color:transparent}
+.cal-day.selected{border-color:var(--b)!important;box-shadow:0 0 0 2px rgba(59,130,246,.28)}
+.cal-day.nodata{background:var(--bg3)}
+.day-num{font-size:.73rem;font-weight:800;margin-bottom:3px;display:flex;align-items:center;justify-content:space-between}
+.day-grade{font-size:.62rem;font-weight:800;padding:1px 5px;border-radius:4px;flex-shrink:0}
+.gA{background:rgba(16,185,129,.2);color:#10b981}.gB{background:rgba(6,182,212,.2);color:#06b6d4}
+.gC{background:rgba(59,130,246,.2);color:#3b82f6}.gD{background:rgba(245,158,11,.2);color:#f59e0b}
+.gF{background:rgba(239,68,68,.2);color:#ef4444}.gX{background:var(--bg2);color:var(--text2)}
+.day-sbar{height:3px;border-radius:100px;background:var(--bg2);margin-bottom:4px;overflow:hidden}
+.day-sfill{height:100%;border-radius:100px}
+.day-habits{display:flex;gap:2px;flex-wrap:wrap;margin-bottom:3px}
+.hbit{width:15px;height:15px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.58rem}
+.hbit.on{opacity:1}.hbit.off{opacity:.2;filter:grayscale(1)}
+.day-calrow{font-size:.63rem;color:var(--text2);display:flex;align-items:center;gap:3px;margin-top:1px}
+.day-calbar{height:3px;border-radius:100px;flex:1;background:var(--bg2);overflow:hidden}
+.day-calfill{height:100%;border-radius:100px}
+/* score bg tints */
+.sbg5{background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(16,185,129,.04))}
+.sbg4{background:linear-gradient(135deg,rgba(6,182,212,.15),rgba(6,182,212,.04))}
+.sbg3{background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(59,130,246,.04))}
+.sbg2{background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(245,158,11,.04))}
+.sbg1{background:linear-gradient(135deg,rgba(239,68,68,.12),rgba(239,68,68,.03))}
+/* heatmap mode */
+.cal-day.hm{min-height:32px;padding:4px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.cal-day.hm .day-grade,.cal-day.hm .day-sbar,.cal-day.hm .day-habits,.cal-day.hm .day-calrow{display:none}
+.cal-day.hm .day-num{margin:0;justify-content:center;font-size:.68rem}
+/* view toggle */
+.vtoggle{display:flex;gap:3px;background:var(--bg3);border-radius:8px;padding:3px}
+.vt{background:none;border:none;color:var(--text2);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:.73rem;font-weight:600;transition:all .2s}
+.vt.active{background:var(--p);color:#fff}
+/* legend */
+.cal-legend{display:flex;gap:10px;flex-wrap:wrap;padding:8px 0 0;font-size:.7rem;color:var(--text2);align-items:center}
+.leg-sq{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+/* day detail panel */
+#day-panel{position:fixed;right:0;top:0;height:100vh;width:390px;max-width:100vw;background:var(--bg2);border-left:1px solid var(--border);z-index:600;transform:translateX(110%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow-y:auto;display:flex;flex-direction:column}
+#day-panel.open{transform:translateX(0)}
+#dp-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:599;display:none;backdrop-filter:blur(2px)}
+#dp-overlay.open{display:block}
+.dp-hdr{padding:14px 16px;background:var(--bg);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1}
+.dp-close{background:var(--bg3);border:none;color:var(--text);cursor:pointer;font-size:.9rem;padding:5px 10px;border-radius:6px;font-weight:600}
+.dp-close:hover{background:var(--r);color:#fff}
+.dp-sec{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.06)}
+.dp-sec-t{font-size:.75rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;display:flex;align-items:center;gap:5px}
+.dp-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.82rem}
+.dp-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dd{background:var(--g)}.dm{background:var(--r)}
+.dp-food{display:flex;justify-content:space-between;padding:4px 0;font-size:.8rem;border-bottom:1px solid rgba(255,255,255,.04)}
+.dp-food:last-child{border:none}
+@media(max-width:600px){.cal-day{min-height:58px;padding:4px}.hbit{width:12px;height:12px}.day-grade{display:none}#day-panel{width:100vw}.cal-ms .v{font-size:.95rem}}
 </style>
 </head>
 <body>
@@ -235,6 +300,7 @@ label{display:block;font-size:.76rem;color:var(--text2);margin-bottom:4px;font-w
   <button class="nb" onclick="showTab('business')">🚀 Business</button>
   <button class="nb" onclick="showTab('progress')">📈 Progress</button>
   <button class="nb" onclick="showTab('notes')">📝 Notes</button>
+  <button class="nb" onclick="showTab('calendar')">📅 Calendar</button>
 </div>
 
 <div id="main">
@@ -505,8 +571,84 @@ label{display:block;font-size:.76rem;color:var(--text2);margin-bottom:4px;font-w
   <div id="notes-list"></div>
 </div>
 
+<!-- CALENDAR TAB -->
+<div id="tab-calendar" class="tab">
+
+  <!-- Monthly Stats Row -->
+  <div class="cal-mstats">
+    <div class="cal-ms"><div class="v" id="cal-avg-score" style="color:var(--b)">—</div><div class="l">Avg Score</div></div>
+    <div class="cal-ms"><div class="v" id="cal-best-score" style="color:var(--g)">—</div><div class="l">Best Day</div></div>
+    <div class="cal-ms"><div class="v" id="cal-active-days" style="color:var(--p)">—</div><div class="l">Active Days</div></div>
+    <div class="cal-ms"><div class="v" id="cal-study-hrs" style="color:var(--b)">0h</div><div class="l">Study Time</div></div>
+    <div class="cal-ms"><div class="v" id="cal-streak" style="color:var(--y)">0</div><div class="l">🔥 Streak</div></div>
+    <div class="cal-ms"><div class="v" id="cal-month-cals" style="color:var(--r)">—</div><div class="l">Avg Calories</div></div>
+  </div>
+
+  <div class="card">
+    <!-- Calendar Header -->
+    <div class="cal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="cal-nav-btn" onclick="calPrevMonth()">‹</button>
+        <span class="cal-title-text" id="cal-title">May 2026</span>
+        <button class="cal-nav-btn" onclick="calNextMonth()">›</button>
+        <button class="cal-nav-btn" onclick="calGoToday()" title="Jump to today" style="font-size:.7rem;width:auto;padding:0 8px">Today</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="vtoggle">
+          <button class="vt active" id="vt-detailed" onclick="setCalView('detailed')">📊 Detailed</button>
+          <button class="vt" id="vt-heatmap" onclick="setCalView('heatmap')">🟩 Heatmap</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Day of week headers -->
+    <div class="cal-grid" style="margin-bottom:4px">
+      <div class="cal-dow">Sun</div><div class="cal-dow">Mon</div><div class="cal-dow">Tue</div>
+      <div class="cal-dow">Wed</div><div class="cal-dow">Thu</div><div class="cal-dow">Fri</div><div class="cal-dow">Sat</div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div class="cal-grid" id="cal-grid-body"></div>
+
+    <!-- Legend -->
+    <div class="cal-legend">
+      <span>Score:</span>
+      <div style="display:flex;align-items:center;gap:4px"><div class="leg-sq" style="background:#10b981"></div>A (85+)</div>
+      <div style="display:flex;align-items:center;gap:4px"><div class="leg-sq" style="background:#06b6d4"></div>B (70+)</div>
+      <div style="display:flex;align-items:center;gap:4px"><div class="leg-sq" style="background:#3b82f6"></div>C (55+)</div>
+      <div style="display:flex;align-items:center;gap:4px"><div class="leg-sq" style="background:#f59e0b"></div>D (40+)</div>
+      <div style="display:flex;align-items:center;gap:4px"><div class="leg-sq" style="background:#ef4444"></div>F (&lt;40)</div>
+      <span style="margin-left:6px">Habits:</span>
+      <div style="display:flex;align-items:center;gap:4px"><span style="font-size:.8rem">💪</span>Workout</div>
+      <div style="display:flex;align-items:center;gap:4px"><span style="font-size:.8rem">📚</span>Study</div>
+      <div style="display:flex;align-items:center;gap:4px"><span style="font-size:.8rem">⏱</span>Fasting</div>
+      <div style="display:flex;align-items:center;gap:4px"><span style="font-size:.8rem">🚀</span>Business</div>
+    </div>
+  </div>
+
+  <!-- Year Heatmap Strip -->
+  <div class="card">
+    <div class="ct">📆 Year at a Glance</div>
+    <div id="year-heatmap" style="overflow-x:auto;padding-bottom:4px"></div>
+    <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:.7rem;color:var(--text2)">
+      Less <div class="leg-sq" style="background:#1e293b;border:1px solid #334155"></div>
+      <div class="leg-sq" style="background:rgba(139,92,246,.2)"></div>
+      <div class="leg-sq" style="background:rgba(139,92,246,.45)"></div>
+      <div class="leg-sq" style="background:rgba(139,92,246,.7)"></div>
+      <div class="leg-sq" style="background:#8b5cf6"></div> More
+    </div>
+  </div>
+
+</div><!-- /tab-calendar -->
+
 </div><!-- /main -->
 </div><!-- /app -->
+
+<!-- DAY DETAIL PANEL (outside main, inside #app) -->
+<div id="dp-overlay" onclick="closeDayPanel()"></div>
+<div id="day-panel">
+  <div id="day-panel-content"></div>
+</div>
 
 <script>
 // ═══════════════════════════════════════════════════
@@ -774,10 +916,11 @@ function showTab(id){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
-  const map={dashboard:'🏠',schedule:'📋',fasting:'⏱',nutrition:'🥗',study:'📚',business:'🚀',progress:'📈',notes:'📝'};
+  const map={dashboard:'🏠',schedule:'📋',fasting:'⏱',nutrition:'🥗',study:'📚',business:'🚀',progress:'📈',notes:'📝',calendar:'📅'};
   document.querySelectorAll('.nb').forEach(b=>{if(b.textContent.includes(map[id])) b.classList.add('active');});
   if(id==='study') renderStudyChart();
   if(id==='progress'){renderWeightChart();renderWeeklyChart();}
+  if(id==='calendar'){renderCalendar();renderYearHeatmap();}
 }
 
 // ═══════════════════════════════════════════════════
@@ -1177,6 +1320,391 @@ function renderAll(){
   renderFastingLog();
   renderFastingArc();
   updateFastingTimer();
+}
+
+// ═══════════════════════════════════════════════════
+// CALENDAR ENGINE
+// ═══════════════════════════════════════════════════
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let calViewMode = 'detailed'; // 'detailed' | 'heatmap'
+let calSelectedDate = null;
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+// ── Score Calculation ──────────────────────────────
+function getDayScore(date) {
+  const sched   = D.schedule[date]   || {};
+  const nutr    = D.nutrition[date]  || {};
+  const foods   = nutr.foods || [];
+  const comp    = sched.completed    || [];
+  const studyMins = (D.studySessions||[]).filter(s=>s.date===date).reduce((a,s)=>a+s.mins,0);
+  const totalCals = foods.reduce((a,f)=>a+f.cals,0);
+
+  const hasData = comp.length>0 || foods.length>0 || studyMins>0;
+  if(!hasData) return {score:0,grade:'X',hasData:false,details:{}};
+
+  const totalItems = DEFAULT_SCHEDULE.length;
+
+  // Tasks: 35 pts
+  const taskScore = Math.round((comp.length/totalItems)*35);
+
+  // Workout: 20 pts
+  const workoutDone = comp.includes('workout');
+  const workoutScore = workoutDone ? 20 : 0;
+
+  // Study: 20 pts (60 min = full, partial below)
+  const studyScore = Math.min(20, Math.round(studyMins/60*20));
+
+  // Calories: 15 pts (within range of goal)
+  const calGoal = D.settings?.calorieGoal||1700;
+  let calScore = 0;
+  if(totalCals>0){
+    const diff=Math.abs(totalCals-calGoal);
+    if(diff<150) calScore=15; else if(diff<300) calScore=10; else if(diff<500) calScore=5;
+  }
+
+  // Business: 10 pts
+  const bizDone = (D.bizTasks||[]).some(t=>t.date===date&&t.done);
+  const bizScore = bizDone ? 10 : 0;
+
+  const score = taskScore+workoutScore+studyScore+calScore+bizScore;
+  const grade = score>=85?'A':score>=70?'B':score>=55?'C':score>=40?'D':'F';
+
+  return {
+    score, grade, hasData,
+    details:{
+      tasks:{done:comp.length, total:totalItems, score:taskScore},
+      workout:{done:workoutDone, score:workoutScore},
+      study:{mins:studyMins, score:studyScore},
+      calories:{total:totalCals, goal:calGoal, score:calScore},
+      business:{done:bizDone, score:bizScore}
+    }
+  };
+}
+
+function scoreColor(score){
+  if(score>=85) return '#10b981';
+  if(score>=70) return '#06b6d4';
+  if(score>=55) return '#3b82f6';
+  if(score>=40) return '#f59e0b';
+  return '#ef4444';
+}
+function scoreBgClass(score){
+  if(score>=85) return 'sbg5';
+  if(score>=70) return 'sbg4';
+  if(score>=55) return 'sbg3';
+  if(score>=40) return 'sbg2';
+  return 'sbg1';
+}
+function gradeClass(g){ return 'g'+g; }
+
+// ── Calendar Grid ──────────────────────────────────
+function renderCalendar(){
+  const td = today();
+  const firstDay = new Date(calYear, calMonth, 1);
+  const lastDay  = new Date(calYear, calMonth+1, 0);
+  const startDow = firstDay.getDay();
+  const daysInMonth = lastDay.getDate();
+  const prevMonthLast = new Date(calYear, calMonth, 0).getDate();
+
+  // Update title
+  const titleEl = document.getElementById('cal-title');
+  if(titleEl) titleEl.textContent = MONTHS[calMonth]+' '+calYear;
+
+  // Build cell array (always 42 cells)
+  let cells=[];
+  for(let i=startDow-1;i>=0;i--){
+    const pm=calMonth===0?12:calMonth; const py=calMonth===0?calYear-1:calYear;
+    cells.push({d:prevMonthLast-i,m:pm,y:py,cur:false});
+  }
+  for(let i=1;i<=daysInMonth;i++) cells.push({d:i,m:calMonth+1,y:calYear,cur:true});
+  const rem=42-cells.length;
+  for(let i=1;i<=rem;i++){
+    const nm=calMonth===11?1:calMonth+2; const ny=calMonth===11?calYear+1:calYear;
+    cells.push({d:i,m:nm,y:ny,cur:false});
+  }
+
+  const isHM = calViewMode==='heatmap';
+  const grid = document.getElementById('cal-grid-body');
+  if(!grid) return;
+
+  grid.innerHTML = cells.map(cell=>{
+    const dateStr=`${cell.y}-${String(cell.m).padStart(2,'0')}-${String(cell.d).padStart(2,'0')}`;
+    const isToday   = dateStr===td;
+    const isFuture  = dateStr>td && !isToday;
+    const isOther   = !cell.cur;
+    const isSel     = dateStr===calSelectedDate;
+
+    const {score,grade,hasData,details} = getDayScore(dateStr);
+
+    // Habit state
+    const comp  = (D.schedule[dateStr]||{}).completed||[];
+    const smins = (D.studySessions||[]).filter(s=>s.date===dateStr).reduce((a,s)=>a+s.mins,0);
+    const habits=[
+      {icon:'💪',on:comp.includes('workout'),tip:'Workout'},
+      {icon:'📚',on:smins>=60,tip:'Study 1h+'},
+      {icon:'⏱',on:(D.fastingLog[dateStr]||[]).length>0,tip:'Fasting tracked'},
+      {icon:'🚀',on:(D.bizTasks||[]).some(t=>t.date===dateStr&&t.done),tip:'Business'},
+    ];
+
+    const cals  = ((D.nutrition[dateStr]||{}).foods||[]).reduce((a,f)=>a+f.cals,0);
+    const cGoal = D.settings?.calorieGoal||1700;
+    const cPct  = Math.min(100,Math.round(cals/cGoal*100));
+    const cCol  = Math.abs(cals-cGoal)<300?'#10b981':'#f59e0b';
+
+    let cls = 'cal-day';
+    if(isHM) cls+=' hm';
+    if(!isOther&&!isFuture&&hasData) cls+=' '+scoreBgClass(score);
+    if(isToday) cls+=' today';
+    if(isOther) cls+=' other-month';
+    if(isFuture&&!isToday) cls+=' future';
+    if(isSel) cls+=' selected';
+
+    const clickable = !isOther && (!isFuture||isToday);
+    const clickAttr = clickable?`onclick="openDayPanel('${dateStr}')"` :'';
+
+    const borderStyle = hasData&&!isOther?`border-color:${scoreColor(score)}38;`:'';
+    const hmBg = isHM&&hasData&&!isOther?`background:${scoreColor(score)}28;border-color:${scoreColor(score)}55;`:'';
+
+    if(isHM){
+      return `<div class="${cls}" ${clickAttr} style="${hmBg}" title="${MONTHS[calMonth]} ${cell.d}${hasData?' · Score: '+score+'/100':''}">
+        <div class="day-num" style="${isToday?'color:var(--p);font-weight:900':''}">${cell.d}</div>
+      </div>`;
+    }
+
+    return `<div class="${cls}" ${clickAttr} style="${borderStyle}">
+      <div class="day-num">
+        <span style="${isToday?'color:var(--p);font-size:.82rem':''}">${isToday?'• ':''}<span>${cell.d}</span></span>
+        <span class="day-grade ${gradeClass(hasData?grade:'X')}">${hasData?grade:'–'}</span>
+      </div>
+      <div class="day-sbar"><div class="day-sfill" style="width:${hasData?score:0}%;background:${hasData?scoreColor(score):'transparent'}"></div></div>
+      <div class="day-habits">
+        ${habits.map(h=>`<div class="hbit ${h.on?'on':'off'}" title="${h.tip}">${h.icon}</div>`).join('')}
+      </div>
+      ${cals>0?`<div class="day-calrow">🔥<div class="day-calbar"><div class="day-calfill" style="width:${cPct}%;background:${cCol}"></div></div><span>${cals}</span></div>`:''}
+    </div>`;
+  }).join('');
+
+  renderMonthStats();
+}
+
+// ── Month Stats ────────────────────────────────────
+function renderMonthStats(){
+  const td=today();
+  const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
+  const monthPfx=`${calYear}-${String(calMonth+1).padStart(2,'0')}-`;
+  let activeDays=[], totalStudyMins=0, totalCalDays=0, totalCalSum=0;
+
+  for(let i=1;i<=daysInMonth;i++){
+    const ds=monthPfx+String(i).padStart(2,'0');
+    if(ds>td) continue;
+    const {score,hasData}=getDayScore(ds);
+    if(hasData) activeDays.push(score);
+    const sm=(D.studySessions||[]).filter(s=>s.date===ds).reduce((a,s)=>a+s.mins,0);
+    totalStudyMins+=sm;
+    const dc=((D.nutrition[ds]||{}).foods||[]).reduce((a,f)=>a+f.cals,0);
+    if(dc>0){totalCalSum+=dc;totalCalDays++;}
+  }
+
+  const avg=activeDays.length?Math.round(activeDays.reduce((a,v)=>a+v,0)/activeDays.length):0;
+  const best=activeDays.length?Math.max(...activeDays):0;
+
+  // Streak (consecutive days with any data ending today)
+  let streak=0, check=new Date();
+  while(streak<365){
+    const ds=check.toISOString().slice(0,10);
+    if(ds>td) {check.setDate(check.getDate()-1);continue;}
+    const {hasData}=getDayScore(ds);
+    if(!hasData) break;
+    streak++; check.setDate(check.getDate()-1);
+  }
+
+  const se=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  se('cal-avg-score', avg?avg+'%':'—');
+  se('cal-best-score', best?best+'%':'—');
+  se('cal-active-days', activeDays.length+(activeDays.length===1?' day':' days'));
+  se('cal-study-hrs', Math.floor(totalStudyMins/60)+'h '+(totalStudyMins%60)+'m');
+  se('cal-streak', streak+(streak===1?' day':' days'));
+  se('cal-month-cals', totalCalDays?Math.round(totalCalSum/totalCalDays)+' kcal':'—');
+}
+
+// ── Year Heatmap ───────────────────────────────────
+function renderYearHeatmap(){
+  const el=document.getElementById('year-heatmap'); if(!el) return;
+  const td=today();
+  const year=new Date().getFullYear();
+
+  // Build a week-column grid
+  const jan1=new Date(year,0,1);
+  const startDow=jan1.getDay();
+  let weeks=[]; let week=[];
+  // Pad start
+  for(let i=0;i<startDow;i++) week.push(null);
+  for(let d=new Date(year,0,1);d.getFullYear()===year;d.setDate(d.getDate()+1)){
+    week.push(new Date(d));
+    if(week.length===7){weeks.push(week);week=[];}
+  }
+  if(week.length>0){while(week.length<7)week.push(null);weeks.push(week);}
+
+  const cellSize=11, gap=2;
+  const totalW=weeks.length*(cellSize+gap)+60;
+
+  // Month labels
+  const monthLabels=[];
+  let prevMonth=-1;
+  weeks.forEach((wk,wi)=>{
+    const firstReal=wk.find(d=>d!=null);
+    if(firstReal&&firstReal.getMonth()!==prevMonth){
+      monthLabels.push({x:wi*(cellSize+gap)+30,label:MONTHS[firstReal.getMonth()].slice(0,3)});
+      prevMonth=firstReal.getMonth();
+    }
+  });
+
+  const svgRows=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((dow,ri)=>{
+    const cells=weeks.map((wk,wi)=>{
+      const d=wk[ri];
+      if(!d) return '';
+      const ds=d.toISOString().slice(0,10);
+      const isFuture=ds>td;
+      const {score,hasData}=getDayScore(ds);
+      const isToday=ds===td;
+      let fill=isFuture?'#1e293b':hasData?scoreColor(score)+'aa':'#1e293b';
+      const stroke=isToday?'#8b5cf6':'transparent';
+      const opacity=isFuture?0.3:1;
+      return `<rect x="${wi*(cellSize+gap)+30}" y="${ri*(cellSize+gap)+20}" width="${cellSize}" height="${cellSize}" rx="2" fill="${fill}" stroke="${stroke}" stroke-width="1.5" opacity="${opacity}">
+        <title>${ds}${hasData?' · Score: '+score:''}${isToday?' (Today)':''}</title>
+      </rect>`;
+    }).join('');
+    return `<text x="0" y="${ri*(cellSize+gap)+30}" font-size="8" fill="#94a3b8" font-family="Segoe UI,sans-serif">${dow.slice(0,1)}</text>${cells}`;
+  }).join('');
+
+  const monthLabelsSvg=monthLabels.map(m=>`<text x="${m.x}" y="12" font-size="8" fill="#94a3b8" font-family="Segoe UI,sans-serif">${m.label}</text>`).join('');
+
+  el.innerHTML=`<svg width="${totalW}" height="${7*(cellSize+gap)+24}" xmlns="http://www.w3.org/2000/svg">
+    ${monthLabelsSvg}${svgRows}
+  </svg>`;
+}
+
+// ── Navigation ─────────────────────────────────────
+function calPrevMonth(){
+  calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar();
+}
+function calNextMonth(){
+  calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar();
+}
+function calGoToday(){
+  calYear=new Date().getFullYear(); calMonth=new Date().getMonth(); renderCalendar();
+}
+function setCalView(mode){
+  calViewMode=mode;
+  document.getElementById('vt-detailed').classList.toggle('active',mode==='detailed');
+  document.getElementById('vt-heatmap').classList.toggle('active',mode==='heatmap');
+  renderCalendar();
+}
+
+
+function openDayPanel(date){
+  calSelectedDate=date; renderCalendar();
+  const{score,grade,hasData,details}=getDayScore(date);
+  const d=new Date(date+'T12:00:00');
+  const dayStr=d.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const scCol=hasData?scoreColor(score):'#94a3b8';
+  const gradeMsg={A:'Exceptional day 🔥🔥',B:'Solid effort! 💪',C:'Good, keep pushing 👍',D:'Could do better 📈',F:'Missed most goals 😤',X:'No data logged yet'};
+  const comp=(D.schedule[date]||{}).completed||[];
+  const allItems=getSchedItemsForDate(date);
+  const foods=(D.nutrition[date]||{}).foods||[];
+  const tCals=foods.reduce((a,f)=>a+f.cals,0);
+  const tP=foods.reduce((a,f)=>a+f.p,0);
+  const tC=foods.reduce((a,f)=>a+f.c,0);
+  const tF=foods.reduce((a,f)=>a+f.f,0);
+  const goal=D.settings?.calorieGoal||1700;
+  const sessions=(D.studySessions||[]).filter(s=>s.date===date);
+  const studyTotal=sessions.reduce((a,s)=>a+s.mins,0);
+  const wEntry=(D.weight||[]).find(w=>w.date===date);
+  const notes=(D.notes||[]).filter(n=>n.date===date);
+  const fastLog=(D.fastingLog[date]||[]);
+  const bizTasks=(D.bizTasks||[]).filter(t=>t.date===date);
+  const scoreParts=hasData?[
+    {l:'Tasks',v:details.tasks?.score||0,max:35,c:'#8b5cf6'},
+    {l:'Workout',v:details.workout?.score||0,max:20,c:'#10b981'},
+    {l:'Study',v:details.study?.score||0,max:20,c:'#3b82f6'},
+    {l:'Cals',v:details.calories?.score||0,max:15,c:'#f59e0b'},
+    {l:'Biz',v:details.business?.score||0,max:10,c:'#ec4899'},
+  ]:[];
+  const doneItems=allItems.filter(i=>comp.includes(i.id));
+  const missedItems=allItems.filter(i=>!comp.includes(i.id));
+  const gradeMap={A:'gA',B:'gB',C:'gC',D:'gD',F:'gF',X:'gX'};
+
+  document.getElementById('day-panel-content').innerHTML=`
+    <div class="dp-hdr">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <button class="dp-close" onclick="closeDayPanel()">✕ Close</button>
+        <span style="font-size:.72rem;color:var(--text2)">${dayStr}</span>
+      </div>
+      <div style="text-align:center;padding:8px 0 4px">
+        <div style="font-size:3rem;font-weight:900;color:${scCol};line-height:1">${hasData?score:'—'}</div>
+        <div style="font-size:.68rem;color:var(--text2);margin-top:2px">out of 100 pts</div>
+        <div style="margin:8px 0"><span class="day-grade ${gradeMap[hasData?grade:'X']}" style="font-size:.85rem;padding:4px 18px">${hasData?'Grade '+grade:'No Data'}</span></div>
+        <div style="font-size:.82rem;font-weight:600;color:${scCol}">${gradeMsg[hasData?grade:'X']}</div>
+      </div>
+      ${hasData?`<div style="background:var(--bg3);border-radius:10px;padding:10px 12px;margin-top:8px">
+        <div style="display:flex;justify-content:space-around;margin-bottom:7px">
+          ${scoreParts.map(s=>`<div style="text-align:center"><div style="font-size:1.05rem;font-weight:900;color:${s.c}">${s.v}</div><div style="font-size:.6rem;color:var(--text2)">${s.l}</div><div style="font-size:.58rem;color:${s.c}">/${s.max}</div></div>`).join('')}
+        </div>
+        <div style="height:6px;background:var(--bg);border-radius:100px;overflow:hidden;display:flex">
+          ${scoreParts.map(s=>`<div style="width:${s.v}%;background:${s.c};height:100%"></div>`).join('')}
+        </div>
+      </div>`:''}
+    </div>
+    <div class="dp-sec">
+      <div class="dp-sec-t">📋 Schedule — ${comp.length}/${allItems.length} completed</div>
+      <div style="height:5px;background:var(--bg3);border-radius:100px;overflow:hidden;margin-bottom:8px">
+        <div style="height:100%;width:${allItems.length?Math.round(comp.length/allItems.length*100):0}%;background:var(--g);border-radius:100px"></div>
+      </div>
+      ${doneItems.map(i=>`<div class="dp-row"><div class="dp-dot dd"></div><span>${i.icon} ${i.name}</span><span style="margin-left:auto;font-size:.68rem;color:var(--text2)">${i.time}</span></div>`).join('')}
+      ${missedItems.length?`<div style="opacity:.6;margin-top:4px">${missedItems.map(i=>`<div class="dp-row"><div class="dp-dot dm"></div><span style="color:var(--text2)">${i.icon} ${i.name}</span><span style="margin-left:auto;font-size:.68rem;color:var(--text2)">${i.time}</span></div>`).join('')}</div>`:''}
+    </div>
+    <div class="dp-sec">
+      <div class="dp-sec-t">🥗 Nutrition</div>
+      ${foods.length?`
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+          <div><span style="font-size:1.4rem;font-weight:900;color:${Math.abs(tCals-goal)<300?'var(--g)':'var(--y)'}">${tCals}</span><span style="font-size:.72rem;color:var(--text2)"> / ${goal} kcal</span></div>
+          <div style="font-size:.72rem;text-align:right"><span style="color:var(--b)">P:${tP}g</span> · <span style="color:var(--y)">C:${tC}g</span> · <span style="color:var(--r)">F:${tF}g</span></div>
+        </div>
+        <div style="height:5px;background:var(--bg3);border-radius:100px;overflow:hidden;margin-bottom:7px"><div style="height:100%;width:${Math.min(100,tCals/goal*100)}%;background:${Math.abs(tCals-goal)<300?'var(--g)':'var(--y)'};border-radius:100px"></div></div>
+        ${foods.slice(0,8).map(f=>`<div class="dp-food"><span>${f.name} <span style="font-size:.68rem;color:var(--text2)">${f.meal}</span></span><span style="color:var(--y);font-weight:700">${f.cals}</span></div>`).join('')}
+        ${foods.length>8?`<div style="font-size:.72rem;color:var(--text2);padding-top:3px">+${foods.length-8} more</div>`:''}
+      `:'<p style="color:var(--text2);font-size:.82rem">No food logged this day.</p>'}
+    </div>
+    <div class="dp-sec">
+      <div class="dp-sec-t">📚 Study — ${studyTotal} min</div>
+      ${sessions.length?`
+        <div style="height:5px;background:var(--bg3);border-radius:100px;overflow:hidden;margin-bottom:7px"><div style="height:100%;width:${Math.min(100,studyTotal/90*100)}%;background:var(--b);border-radius:100px"></div></div>
+        ${sessions.map(s=>`<div class="dp-row" style="align-items:flex-start"><div class="dp-dot" style="background:var(--b);margin-top:5px"></div><div style="flex:1"><div style="font-size:.82rem;font-weight:500">${s.type}</div>${s.notes?`<div style="font-size:.72rem;color:var(--text2)">"${s.notes}"</div>`:''}</div><span style="color:var(--b);font-weight:800;font-size:.8rem">${s.mins}m</span></div>`).join('')}
+      `:'<p style="color:var(--text2);font-size:.82rem">No study sessions.</p>'}
+    </div>
+    ${bizTasks.length?`<div class="dp-sec"><div class="dp-sec-t">🚀 Business Tasks</div>${bizTasks.map(t=>`<div class="dp-row"><div class="dp-dot ${t.done?'dd':'dm'}"></div><span style="${t.done?'':'color:var(--text2)'};flex:1">${t.name}</span><span style="font-size:.7rem;color:var(--text2)">${t.priority}</span></div>`).join('')}</div>`:''}
+    ${wEntry?`<div class="dp-sec"><div class="dp-sec-t">⚖️ Weight</div><div style="display:flex;align-items:center;gap:14px"><div style="font-size:1.9rem;font-weight:900;color:var(--p)">${wEntry.w}<span style="font-size:.85rem"> kg</span></div><div style="font-size:.75rem;color:var(--text2)">Start: ${(D.weight[0]||{}).w||80}kg · Goal: ${D.settings?.targetWeight||70}kg<br>Still to lose: ${Math.max(0,(wEntry.w-(D.settings?.targetWeight||70))).toFixed(1)}kg</div></div></div>`:''}
+    ${fastLog.length?`<div class="dp-sec"><div class="dp-sec-t">⏱ Fasting Log</div>${fastLog.map(l=>`<div class="dp-row"><div class="dp-dot" style="background:var(--y)"></div><span>${l.type==='start'?'🍳 Meal started':'✅ Meal ended'}</span><span style="margin-left:auto;color:var(--y);font-weight:700;font-size:.78rem">${l.time}</span></div>`).join('')}</div>`:''}
+    ${notes.length?`<div class="dp-sec"><div class="dp-sec-t">📝 Notes (${notes.length})</div>${notes.map(n=>`<div style="background:var(--bg3);border-radius:8px;padding:9px;margin-bottom:5px;border-left:2px solid var(--p)">${n.title?`<div style="font-weight:700;font-size:.82rem;margin-bottom:2px">${n.title}</div>`:''}<div style="font-size:.79rem;line-height:1.5">${n.content}</div><div style="font-size:.67rem;color:var(--text2);margin-top:3px">${n.cat} · ${n.time}</div></div>`).join('')}</div>`:''}
+    <div style="height:40px"></div>
+  `;
+  document.getElementById('day-panel').classList.add('open');
+  document.getElementById('dp-overlay').classList.add('open');
+}
+
+function closeDayPanel(){
+  calSelectedDate=null;
+  document.getElementById('day-panel').classList.remove('open');
+  document.getElementById('dp-overlay').classList.remove('open');
+  renderCalendar();
+}
+
+function getSchedItemsForDate(date){
+  const custom=(D.schedule[date]||{}).customTasks||[];
+  return [...DEFAULT_SCHEDULE,...custom].sort((a,b)=>a.time.localeCompare(b.time));
 }
 </script>
 </body>
